@@ -9,8 +9,8 @@
  * - Cache efficiency
  */
 
-import { writeFileSync, readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
+import { resolve, dirname } from "path";
 
 /**
  * Pricing per provider (per 1M tokens)
@@ -113,6 +113,17 @@ export class MetricsCollector {
 
   private constructor() {
     this.metricsPath = resolve(process.cwd(), "data", "metrics.json");
+    
+    // Ensure data directory exists
+    const dataDir = dirname(this.metricsPath);
+    if (!existsSync(dataDir)) {
+      try {
+        mkdirSync(dataDir, { recursive: true });
+      } catch (error) {
+        console.warn("[Metrics] Failed to create data directory:", error);
+      }
+    }
+    
     this.currentMetrics = this.loadMetrics();
   }
 
@@ -201,6 +212,11 @@ export class MetricsCollector {
     error?: boolean;
   }) {
     const { provider, tokens, latency, cached, error } = params;
+
+    // Safety check: ensure metrics are initialized
+    if (!this.currentMetrics || !this.currentMetrics.embeddings) {
+      this.currentMetrics = this.initializeMetrics();
+    }
 
     // Initialize provider stats if needed
     if (!this.currentMetrics.embeddings.byProvider[provider]) {

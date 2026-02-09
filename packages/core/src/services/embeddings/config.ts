@@ -20,11 +20,11 @@ export interface EmbeddingProviderConfig {
  * Provider configurations sorted by priority
  *
  * Priority order:
- * 1. Mistral Text (general purpose, good quality) - ENABLED
- * 2. Mistral Code (specialized for code) - ENABLED
+ * 1. Ollama (local, low latency) - ENABLED
+ * 2. Mistral Text (general purpose, good quality) - ENABLED
+ * 3. Mistral Code (specialized for code) - ENABLED
  * 
  * DISABLED (no API keys configured):
- * - Ollama (local, not installed)
  * - OpenAI (no API key)
  * - Google (no API key)
  * - Cohere (no API key)
@@ -32,12 +32,22 @@ export interface EmbeddingProviderConfig {
 export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
   // === ENABLED PROVIDERS ===
   
+  ollama: {
+    provider: "ollama",
+    model: process.env.OLLAMA_EMBEDDING_MODEL || "bge-m3",
+    baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    dimensions: 1024, // bge-m3 is 1024 dimensions
+    priority: 1, // Highest priority (local, fast, free)
+    timeout: 300000, // 5 minutes (local can be slow on first run)
+    maxRetries: 2,
+  },
+  
   mistralText: {
     provider: "mistral",
     model: process.env.MISTRAL_TEXT_EMBEDDING_MODEL || "mistral-embed",
     apiKey: process.env.MISTRAL_API_KEY,
     dimensions: 1024,
-    priority: 1, // Highest priority since it's the only configured provider
+    priority: 2, // Fallback to Mistral if Ollama is unavailable
     timeout: 60000,
     maxRetries: 3,
   },
@@ -47,7 +57,7 @@ export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
     model: process.env.MISTRAL_CODE_EMBEDDING_MODEL || "codestral-embed",
     apiKey: process.env.MISTRAL_API_KEY,
     dimensions: 1536, // Default, can go up to 3072
-    priority: 2,
+    priority: 3,
     timeout: 60000,
     maxRetries: 3,
   },
@@ -55,15 +65,6 @@ export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
   // === DISABLED PROVIDERS (uncomment and configure to enable) ===
   
   /*
-  ollama: {
-    provider: "ollama",
-    model: process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text",
-    baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    dimensions: 768,
-    priority: 10,
-    timeout: 300000, // 5 minutes (local can be slow on first run)
-    maxRetries: 2,
-  },
 
   openai: {
     provider: "openai",
@@ -109,13 +110,18 @@ export function getProvidersByPriority(): Array<
 }
 
 /**
- * Check if provider has required API key
+ * Check if provider has required API key or is a local provider
  */
 export function hasApiKey(providerName: string): boolean {
   const config = embeddingProviders[providerName];
   
   if (!config) {
     return false;
+  }
+
+  // Ollama doesn't need an API key (local)
+  if (config.provider === "ollama") {
+    return true;
   }
 
   // Mistral requires API key

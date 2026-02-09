@@ -216,6 +216,26 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
         () =>
           withRetry(
             async () => {
+              // Ollama: Custom direct API call (no AI SDK)
+              if (this.providerType === "ollama") {
+                const response = await fetch(`${this.baseURL}/api/embeddings`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    model: this.model,
+                    prompt: text,
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json() as { embedding: number[] };
+                return data.embedding;
+              }
+
+              // Other providers: Use AI SDK
               const provider = this.getSDKProvider();
               const options = this.getProviderOptions();
 
@@ -264,12 +284,24 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
    * Embed multiple texts in batch
    *
    * Note: AI SDK's embedMany handles batching internally
+   * Ollama: Uses sequential calls (no native batch API)
    */
   async embedBatch(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) {
       return [];
     }
 
+    // Ollama: Sequential calls (no batch API)
+    if (this.providerType === "ollama") {
+      const embeddings: number[][] = [];
+      for (const text of texts) {
+        const embedding = await this.embedQuery(text);
+        embeddings.push(embedding);
+      }
+      return embeddings;
+    }
+
+    // Other providers: Use AI SDK batch
     return withTimeout(
       () =>
         withRetry(
