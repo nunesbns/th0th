@@ -4,7 +4,7 @@
  * Persistent cache using SQLite (medium speed, persistent)
  */
 
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 import { CacheLevel } from '@th0th/shared';
 import { config } from '@th0th/shared';
 import { logger } from '@th0th/shared';
@@ -15,7 +15,7 @@ import { logger } from '@th0th/shared';
 export class L2SQLiteCache {
   private dbPath: string;
   private defaultTTL: number;
-  private db!: Database.Database;
+  private db!: Database;
 
   constructor() {
     const l2Config = config.get('cache').l2;

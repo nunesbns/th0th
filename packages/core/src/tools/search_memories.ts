@@ -8,7 +8,7 @@
 import { IToolHandler } from "@th0th/shared";
 import { ToolResponse, MemoryType, MemoryLevel } from "@th0th/shared";
 import { logger } from "@th0th/shared";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import { config } from "@th0th/shared";
 import path from "path";
 import fs from "fs";
@@ -108,7 +108,7 @@ export class SearchMemoriesTool implements IToolHandler {
     required: ["query"],
   };
 
-  private db!: Database.Database;
+  private db!: Database;
   private embeddingService: EmbeddingService;
 
   constructor() {

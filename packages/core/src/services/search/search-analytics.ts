@@ -10,7 +10,7 @@
  */
 
 import { logger } from "@th0th/shared";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import path from "path";
 import os from "os";
 import fs from "fs";
@@ -54,7 +54,7 @@ interface AnalyticsSummary {
 }
 
 export class SearchAnalytics {
-  private db: Database.Database;
+  private db: Database;
 
   constructor(dbPath?: string) {
     const defaultPath = path.join(os.homedir(), ".rlm", "search-analytics.db");

@@ -13,7 +13,7 @@
 
 import { SearchResult } from "@th0th/shared";
 import { logger } from "@th0th/shared";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import crypto from "crypto";
 import path from "path";
 import os from "os";
@@ -42,7 +42,7 @@ interface CacheStats {
 
 export class SearchCache {
   private l1Cache: Map<string, CacheEntry> = new Map();
-  private l2Db: Database.Database;
+  private l2Db: Database;
   private stats: CacheStats = {
     l1Hits: 0,
     l1Misses: 0,

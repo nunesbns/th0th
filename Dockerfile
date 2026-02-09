@@ -11,8 +11,11 @@ COPY package.json bun.lock turbo.json tsconfig.json bunfig.toml ./
 COPY packages ./packages
 COPY apps ./apps
 
-# Instala dependências
-RUN bun install
+# Instala dependências (ignora scripts do Prisma que checam versão do Node)
+RUN bun install --ignore-scripts
+
+# Gera Prisma Client manualmente
+RUN cd packages/core && bunx prisma generate
 
 # Build do projeto
 RUN bun run build

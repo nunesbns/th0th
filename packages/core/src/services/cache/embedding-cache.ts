@@ -6,7 +6,7 @@
  */
 
 import { createHash } from "crypto";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import { logger } from "@th0th/shared";
 import { config } from "@th0th/shared";
 
@@ -36,7 +36,7 @@ export interface EmbeddingCacheStats {
  * - Automatic cleanup of old entries
  */
 export class EmbeddingCache {
-  private db!: Database.Database;
+  private db!: Database;
   private dbPath: string;
   private provider: string;
   private model: string;
