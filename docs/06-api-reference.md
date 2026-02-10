@@ -68,7 +68,7 @@ Recupera contexto otimizado com economia máxima de tokens.
 
 ### store_memory
 
-Armazena uma memória no Mem0.
+Armazena uma memória no memoria local.
 
 **Input:**
 ```json
@@ -122,7 +122,7 @@ Armazena uma memória no Mem0.
 
 ### search_memories
 
-Busca memórias relevantes no Mem0.
+Busca memórias relevantes no memoria local.
 
 **Input:**
 ```json
@@ -323,8 +323,8 @@ interface CompressedContent {
 
 | Variável | Descrição | Obrigatório | Padrão |
 |----------|-----------|-------------|--------|
-| `MEM0_API_KEY` | API key do Mem0.ai | Sim | - |
-| `MEM0_HOST` | URL do serviço Mem0 | Não | `https://api.mem0.ai` |
+| `CLOUD_SYNC_API_KEY` | API key do serviço de sincronização cloud | Sim | - |
+| `CLOUD_SYNC_HOST` | URL do serviço de sincronização cloud | Não | `https://api.example.com` |
 | `OPENAI_API_KEY` | API key da OpenAI | Não | - |
 | `PROJECT_PATH` | Caminho do projeto | Não | `./` |
 | `CACHE_PATH` | Diretório de cache | Não | `./cache` |
@@ -335,12 +335,12 @@ interface CompressedContent {
 ```json
 {
   "mcpServers": {
-    "rlm-mem0": {
+    "rlm-memory": {
       "command": "node",
-      "args": ["/path/to/mcp-rlm-mem0/build/index.js"],
+      "args": ["/path/to/th0th-mcp/build/index.js"],
       "env": {
-        "MEM0_API_KEY": "sua-api-key",
-        "MEM0_HOST": "https://api.mem0.ai",
+        "CLOUD_SYNC_API_KEY": "sua-api-key",
+        "CLOUD_SYNC_HOST": "https://api.example.com",
         "PROJECT_PATH": "/path/to/project",
         "LOG_LEVEL": "info"
       }
@@ -368,8 +368,8 @@ interface CompressedContent {
 
 | Código | Descrição | Solução |
 |--------|-----------|---------|
-| `MEM0_AUTH_ERROR` | Falha na autenticação Mem0 | Verifique MEM0_API_KEY |
-| `MEM0_CONNECTION_ERROR` | Não foi possível conectar ao Mem0 | Verifique MEM0_HOST |
+| `CLOUD_SYNC_AUTH_ERROR` | Falha na autenticação do serviço cloud | Verifique CLOUD_SYNC_API_KEY |
+| `CLOUD_SYNC_CONNECTION_ERROR` | Não foi possível conectar ao serviço cloud | Verifique CLOUD_SYNC_HOST |
 | `COMPRESSION_ERROR` | Falha na compressão | Verifique sintaxe do código |
 | `CACHE_ERROR` | Erro no cache | Verifique permissões do diretório |
 | `VALIDATION_ERROR` | Input inválido | Verifique schema da requisição |

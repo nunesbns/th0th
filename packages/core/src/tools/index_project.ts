@@ -1,14 +1,18 @@
 /**
  * Index Project Tool
  *
- * Indexa um projeto inteiro para busca contextual otimizada.
+ * Indexa um projeto inteiro para busca contextual otimizada (ASSÍNCRONO).
  * Cria embeddings e índices FTS5 para todos os arquivos relevantes.
+ * 
+ * Retorna um jobId imediatamente e processa a indexação em background.
+ * Use th0th_get_index_status(jobId) para acompanhar o progresso.
  */
 
 import { IToolHandler } from "@th0th/shared";
 import { ToolResponse } from "@th0th/shared";
 import { ContextualSearchRLM } from "../services/search/contextual-search-rlm.js";
 import { logger } from "@th0th/shared";
+import { indexJobTracker } from "../services/jobs/index-job-tracker.js";
 import path from "path";
 
 interface IndexProjectParams {
@@ -74,65 +78,148 @@ export class IndexProjectTool implements IToolHandler {
       const finalProjectId =
         projectId || path.basename(projectPath) || "default";
 
-      logger.info("Starting project indexing", {
+      // Cria job de indexação
+      const job = indexJobTracker.createJob(finalProjectId, projectPath);
+
+      logger.info("Indexing job created", {
+        jobId: job.jobId,
         projectPath,
         projectId: finalProjectId,
+      });
+
+      // Executa indexação em background (não await)
+      this.executeIndexing(
+        job.jobId,
+        finalProjectId,
+        projectPath,
         forceReindex,
         warmCache,
+        warmupQueries
+      ).catch((error) => {
+        logger.error("Background indexing failed", error as Error, {
+          jobId: job.jobId,
+        });
       });
 
-      // Se forceReindex, limpa indexação anterior
-      if (forceReindex) {
-        await this.contextualSearch.clearProjectIndex(finalProjectId);
-        logger.info("Cleared previous project index", {
-          projectId: finalProjectId,
-        });
-      }
-
-      // Indexa o projeto
-      const stats = await this.contextualSearch.indexProject(
-        projectPath,
-        finalProjectId,
-      );
-
-      logger.info("Project indexing completed", {
-        projectId: finalProjectId,
-        ...stats,
-      });
-
-      // Warmup cache if requested
-      let warmupStats = null;
-      if (warmCache) {
-        logger.info("Starting cache warmup", { projectId: finalProjectId });
-        warmupStats = await this.contextualSearch.warmupCache(
-          finalProjectId,
-          projectPath,
-          warmupQueries,
-        );
-        logger.info("Cache warmup completed", {
-          projectId: finalProjectId,
-          ...warmupStats,
-        });
-      }
-
+      // Retorna imediatamente com jobId
       return {
         success: true,
         data: {
+          jobId: job.jobId,
           projectId: finalProjectId,
-          ...stats,
-          ...(warmupStats && { warmup: warmupStats }),
+          projectPath,
+          status: "started",
+          message:
+            "Indexing started in background. Use th0th_get_index_status(jobId) to check progress.",
         },
       };
     } catch (error) {
-      logger.error("Failed to index project", error as Error, {
+      logger.error("Failed to start indexing job", error as Error, {
         projectPath,
         projectId,
       });
 
       return {
         success: false,
-        error: `Failed to index project: ${(error as Error).message}`,
+        error: `Failed to start indexing: ${(error as Error).message}`,
       };
+    }
+  }
+
+  /**
+   * Executa indexação em background com progress updates
+   */
+  private async executeIndexing(
+    jobId: string,
+    projectId: string,
+    projectPath: string,
+    forceReindex: boolean,
+    warmCache: boolean,
+    warmupQueries?: string[]
+  ): Promise<void> {
+    const startTime = Date.now();
+
+    try {
+      indexJobTracker.updateStatus(jobId, "running");
+
+      logger.info("Starting project indexing", {
+        jobId,
+        projectPath,
+        projectId,
+        forceReindex,
+        warmCache,
+      });
+
+      // Se forceReindex, limpa indexação anterior
+      if (forceReindex) {
+        await this.contextualSearch.clearProjectIndex(projectId);
+        logger.info("Cleared previous project index", {
+          jobId,
+          projectId,
+        });
+      }
+
+      // Indexa o projeto (contextualSearch já faz progress logging interno)
+      const stats = await this.contextualSearch.indexProject(
+        projectPath,
+        projectId,
+        {
+          onProgress: (current, total) => {
+            indexJobTracker.updateProgress(jobId, current, total);
+          },
+        }
+      );
+
+      const duration = Date.now() - startTime;
+
+      logger.info("Project indexing completed", {
+        jobId,
+        projectId,
+        duration,
+        ...stats,
+      });
+
+      // Warmup cache if requested
+      if (warmCache) {
+        logger.info("Starting cache warmup", { jobId, projectId });
+        const warmupStats = await this.contextualSearch.warmupCache(
+          projectId,
+          projectPath,
+          warmupQueries
+        );
+        logger.info("Cache warmup completed", {
+          jobId,
+          projectId,
+          ...warmupStats,
+        });
+      }
+
+      // Marca job como completo
+      indexJobTracker.setResult(jobId, {
+        filesIndexed: stats.filesIndexed,
+        chunksIndexed: stats.chunksIndexed,
+        errors: stats.errors || 0,
+        duration,
+      });
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error("Project indexing failed", error as Error, {
+        jobId,
+        projectPath,
+        projectId,
+        duration,
+      });
+
+      indexJobTracker.setResult(
+        jobId,
+        {
+          filesIndexed: 0,
+          chunksIndexed: 0,
+          errors: 1,
+          duration,
+        },
+        (error as Error).message
+      );
     }
   }
 }

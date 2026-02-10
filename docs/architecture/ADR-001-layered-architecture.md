@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O projeto MCP RLM Mem0 requer uma arquitetura que:
+O projeto th0th MCP requer uma arquitetura que:
 - Separe claramente responsabilidades
 - Facilite manutenção e evolução
 - Permita testes isolados de componentes
@@ -26,7 +26,7 @@ Adotamos uma **arquitetura em camadas (layered architecture)** com 3 camadas pri
 ### Camada 2: Service Layer (src/services/)
 - **Responsabilidade:** Lógica de negócio e orquestração
 - **Componentes:**
-  - `mem0/` - Cliente e integração com Mem0.ai
+  - `memory/` - Cliente e integração com camada de memoria local
   - `compression/` - Serviços de compressão semântica
   - `cache/` - Gerenciador de cache hierárquico
 - **Dependências:** Data Layer e Models

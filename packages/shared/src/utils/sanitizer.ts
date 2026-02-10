@@ -29,25 +29,39 @@ export function sanitizeInput(input: string): string {
  * Sanitize query for SQL FTS5
  * 
  * Converts space-separated terms to OR logic for better recall.
+ * Properly quotes terms that contain special characters.
  * Example: "cn() tailwind merge" -> "cn OR tailwind OR merge"
+ * Example: "user-select caret-color" -> '"user-select" OR "caret-color"'
  */
 export function sanitizeFTS5Query(query: string): string {
-  // Escape FTS5 special characters and split into terms
+  // Remove parentheses and trim
   const sanitized = query
-    .replace(/["]/g, '""') // Escape quotes
     .replace(/[()]/g, '') // Remove parentheses
     .trim();
+  
+  // If empty, return a wildcard or empty string
+  if (!sanitized) {
+    return '*';
+  }
   
   // Split by whitespace and filter empty terms
   const terms = sanitized.split(/\s+/).filter(t => t.length > 0);
   
-  // If only one term, return as-is
-  if (terms.length === 1) {
-    return terms[0];
+  // Quote each term and join with OR
+  const quotedTerms = terms.map(term => {
+    // Escape internal quotes
+    const escaped = term.replace(/"/g, '""');
+    // Always quote terms to handle special characters safely
+    return `"${escaped}"`;
+  });
+  
+  // If only one term, return it quoted
+  if (quotedTerms.length === 1) {
+    return quotedTerms[0];
   }
   
   // Multiple terms: join with OR for better recall
-  return terms.join(' OR ');
+  return quotedTerms.join(' OR ');
 }
 
 /**

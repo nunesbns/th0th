@@ -16,6 +16,8 @@
     "start:mcp": "bun run --filter @th0th/mcp-client start",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "bench:fixture:sicad": "bun run --filter @th0th/core bench:fixture:sicad",
+    "bench:beir": "bun run --filter @th0th/core bench:beir",
     "lint": "turbo run lint",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist"
   },

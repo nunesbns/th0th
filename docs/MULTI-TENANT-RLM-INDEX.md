@@ -35,8 +35,8 @@ Este documento serve como índice de referência para consultas no sistema RLM (
 ```typescript
 // Query 1: Visão geral da arquitetura
 await mcpClient.callTool("get_optimized_context", {
-  query: "multi-tenant architecture MCP RLM Mem0 overview isolation layers",
-  projectId: "mcp-rlm-mem0",
+  query: "multi-tenant architecture th0th MCP overview isolation layers",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 4000,
@@ -46,7 +46,7 @@ await mcpClient.callTool("get_optimized_context", {
 await mcpClient.callTool("get_optimized_context", {
   query:
     "multi-tenant implementation patterns TenantContext isolation vector store cache",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 6000,
@@ -56,7 +56,7 @@ await mcpClient.callTool("get_optimized_context", {
 await mcpClient.callTool("get_optimized_context", {
   query:
     "multi-tenant security authentication authorization encryption audit logging",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 3000,
@@ -69,21 +69,21 @@ await mcpClient.callTool("get_optimized_context", {
 // Query 4: Código completo de serviço
 await mcpClient.callTool("search_code", {
   query: "TenantMemoryService complete implementation TypeScript",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   limit: 10,
 });
 
 // Query 5: Helper classes
 await mcpClient.callTool("search_code", {
   query: "MultiTenantMcpClient helper class methods",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   limit: 10,
 });
 
 // Query 6: Casos de uso reais
 await mcpClient.callTool("get_optimized_context", {
   query: "multi-tenant real use cases agency SaaS feature branches examples",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 5000,
@@ -97,7 +97,7 @@ await mcpClient.callTool("get_optimized_context", {
 await mcpClient.callTool("get_optimized_context", {
   query:
     "multi-tenant troubleshooting cross-tenant data leakage isolation issues",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 3000,
@@ -107,7 +107,7 @@ await mcpClient.callTool("get_optimized_context", {
 await mcpClient.callTool("get_optimized_context", {
   query:
     "multi-tenant performance optimization connection pooling cache strategy",
-  projectId: "mcp-rlm-mem0",
+  projectId: "th0th-mcp",
   userId: "documentation-system",
   sessionId: "multi-tenant-docs-session",
   maxTokens: 3000,
@@ -155,7 +155,7 @@ Todas as memórias multi-tenant foram indexadas com:
 
 ```typescript
 {
-  projectId: 'mcp-rlm-mem0',
+  projectId: 'th0th-mcp',
   userId: 'documentation-system',
   sessionId: 'multi-tenant-docs-session',
   importance: 0.9-0.95
@@ -213,7 +213,7 @@ Todas as memórias multi-tenant foram indexadas com:
 # Via CLI do OpenCode
 /mcp call rlm-memory get_optimized_context \
   --query "multi-tenant architecture complete overview" \
-  --projectId "mcp-rlm-mem0" \
+  --projectId "th0th-mcp" \
   --userId "documentation-system" \
   --maxTokens 6000
 ```
@@ -224,7 +224,7 @@ Todas as memórias multi-tenant foram indexadas com:
 # Buscar implementação de service
 /mcp call rlm-memory search_code \
   --query "TenantMemoryService storeMemory implementation" \
-  --projectId "mcp-rlm-mem0" \
+  --projectId "th0th-mcp" \
   --limit 5
 ```
 
@@ -234,7 +234,7 @@ Todas as memórias multi-tenant foram indexadas com:
 # Resolver problema específico
 /mcp call rlm-memory get_optimized_context \
   --query "multi-tenant cross-tenant data leakage solution" \
-  --projectId "mcp-rlm-mem0" \
+  --projectId "th0th-mcp" \
   --userId "documentation-system" \
   --maxTokens 2000
 ```
@@ -262,7 +262,7 @@ npm run index:docs:multi-tenant
 /mcp call rlm-memory store_memory \
   --content "Updated multi-tenant docs..." \
   --type "code" \
-  --projectId "mcp-rlm-mem0" \
+  --projectId "th0th-mcp" \
   --userId "documentation-system" \
   --importance 0.95
 ```

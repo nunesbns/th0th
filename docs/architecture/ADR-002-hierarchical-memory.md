@@ -23,21 +23,21 @@ Implementamos um **sistema de memória hierárquica de 5 níveis**, inspirado em
 - **Conteúdo:** Contexto ativo atual
 - **Gerenciado por:** LLM
 
-### Nível 3: Session Memory (Mem0 Session)
+### Nível 3: Session Memory (memoria local Session)
 - **Capacidade:** Ilimitada
-- **Latência:** ~100-200ms (API Mem0)
+- **Latência:** ~100-200ms (API memoria local)
 - **Custo:** Médio
 - **Conteúdo:** Conversa atual, últimas N interações
 - **TTL:** Fim da sessão
-- **Storage:** Mem0.ai cloud
+- **Storage:** camada de memoria local cloud
 
-### Nível 2: User Memory (Mem0 User)
+### Nível 2: User Memory (memoria local User)
 - **Capacidade:** Ilimitada
-- **Latência:** ~100-200ms (API Mem0)
+- **Latência:** ~100-200ms (API memoria local)
 - **Custo:** Médio
 - **Conteúdo:** Preferências, padrões de código, decisões passadas
 - **TTL:** 30-90 dias (configurável)
-- **Storage:** Mem0.ai cloud
+- **Storage:** camada de memoria local cloud
 
 ### Nível 1: Project Memory (Vector DB + SQLite)
 - **Capacidade:** ~1M vetores
@@ -65,8 +65,8 @@ Implementamos um **sistema de memória hierárquica de 5 níveis**, inspirado em
 3. Cache L2 (SQLite) → HIT? → Retorna + Popula L1
         ↓ MISS
 4. Busca paralela:
-   ├─→ Mem0 User Memory (preferências)
-   ├─→ Mem0 Session Memory (conversa)
+   ├─→ memoria local User Memory (preferências)
+   ├─→ memoria local Session Memory (conversa)
    └─→ Vector DB (código relevante)
         ↓
 5. Compressão semântica
@@ -134,14 +134,14 @@ Ver:
 - **Contras:** Não considera semântica/importância
 - **Decisão:** Rejeitada (mas LRU usado dentro de L1)
 
-### 3. Memory Hierárquica de 3 níveis (sem Mem0)
+### 3. Memory Hierárquica de 3 níveis (sem memoria local)
 - **Prós:** Menos dependências externas
 - **Contras:** Perde benefícios de managed memory service
-- **Decisão:** Rejeitada (Mem0 traz muito valor)
+- **Decisão:** Rejeitada (memoria local traz muito valor)
 
 ## Revisão
 
 Revisar se:
 - Cache hit rate < 40% consistentemente
 - Latência > 200ms em p95
-- Custo de Mem0 se tornar proibitivo
+- Custo de memoria local se tornar proibitivo

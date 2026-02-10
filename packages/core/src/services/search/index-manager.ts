@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import { glob } from "glob";
 import ignoreModule, { Ignore } from "ignore";
-import { logger } from "@th0th/shared";
+import { logger, config } from "@th0th/shared";
 import type { IVectorStore } from "@th0th/shared";
 
 const globAsync = glob;
@@ -284,20 +284,18 @@ export class IndexManager {
     const files = new Map<string, FileMetadata>();
 
     try {
-      const patterns = [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx",
-        "**/*.py",
-        "**/*.java",
-        "**/*.go",
-        "**/*.rs",
-        "**/*.c",
-        "**/*.cpp",
-        "**/*.h",
-        "**/*.hpp",
+      // Use same extensions as indexProject() to avoid false staleness
+      const securityConfig = config.get("security");
+      const allowedExtensions = securityConfig.allowedExtensions || [
+        ".ts",
+        ".js",
+        ".tsx",
+        ".jsx",
+        ".py",
       ];
+
+      // Build glob patterns from extensions
+      const patterns = allowedExtensions.map((ext: string) => `**/*${ext}`);
 
       // Load .gitignore rules
       const ig = await this.loadGitignore(projectPath);

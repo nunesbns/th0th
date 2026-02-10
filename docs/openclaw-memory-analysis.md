@@ -1,10 +1,10 @@
-# Análise do Sistema de Memória do OpenClaw - Insights para MCP RLM Mem0
+# Análise do Sistema de Memória do OpenClaw - Insights para th0th MCP
 
 ## Índice
 
 1. [Visão Geral da Arquitetura](#1-visão-geral-da-arquitetura)
 2. [Diagramas Visuais](#2-diagramas-visuais)
-3. [Aplicação Prática ao MCP RLM Mem0](#3-aplicação-prática-ao-mcp-rlm-mem0)
+3. [Aplicação Prática ao th0th MCP](#3-aplicação-prática-ao-th0th-mcp)
 4. [Padrões Arquiteturais](#4-padrões-arquiteturais)
 5. [Melhores Práticas Identificadas](#5-melhores-práticas-identificadas)
 6. [Técnicas de Otimização](#6-técnicas-de-otimização)
@@ -89,11 +89,11 @@ Este diagrama detalha o algoritmo de busca híbrida:
 
 ---
 
-## 3. Aplicação Prática ao MCP RLM Mem0
+## 3. Aplicação Prática ao th0th MCP
 
-### 3.1 Gaps Atuais no MCP RLM Mem0
+### 3.1 Gaps Atuais no th0th MCP
 
-| Componente | OpenClaw | MCP RLM Mem0 Atual | Gap |
+| Componente | OpenClaw | th0th MCP Atual | Gap |
 |------------|----------|-------------------|-----|
 | **Search** | Híbrida (vector + keyword) | Apenas vetorial | ❌ Sem fallback keyword |
 | **Cache** | SHA-256 hash com SQLite | Não implementado | ❌ APIs desnecessárias |
@@ -945,7 +945,7 @@ private async removeIndexFiles(basePath: string): Promise<void> {
 
 ### 8.1 Implementar Hybrid Search
 
-**Problema atual**: MCP RLM Mem0 usa apenas busca vetorial.
+**Problema atual**: th0th MCP usa apenas busca vetorial.
 
 **Solução**:
 
@@ -1512,7 +1512,7 @@ describe("MemoryIndexManager", () => {
 ### 1. Validação do Ambiente Atual
 ```bash
 # Verificar dependências atuais
-cd /home/joaov/projetos/ON/mcp-rlm-mem0
+cd /home/joaov/projetos/ON/th0th-mcp
 npm list chromadb sqlite3 chokidar
 
 # Instalar dependências faltantes
@@ -1567,7 +1567,7 @@ Configure tracking de:
 
 ## Contato e Suporte
 
-Para dúvidas ou sugestões sobre a implementação dos padrões do OpenClaw no MCP RLM Mem0:
+Para dúvidas ou sugestões sobre a implementação dos padrões do OpenClaw no th0th MCP:
 
 1. **Issues**: Abra uma issue no repositório com tag `openclaw-pattern`
 2. **Documentação**: Consulte `/docs/` para detalhes de implementação

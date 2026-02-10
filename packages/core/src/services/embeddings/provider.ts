@@ -142,6 +142,10 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
   private readonly baseURL?: string;
   private readonly timeout: number;
   private readonly retryConfig: RetryConfig;
+  
+  // Ollama rate limiting: Queue to prevent overwhelming the server
+  private static ollamaQueue: Promise<any> = Promise.resolve();
+  private static readonly OLLAMA_DELAY_MS = 50; // 50ms between requests
 
   constructor(
     private readonly config: EmbeddingProviderConfig,
@@ -205,6 +209,79 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
   }
 
   /**
+   * Truncate text to fit model context length
+   * BGE-M3: 8192 tokens max (~2k chars for max safety - code tokenizes very densely)
+   */
+  private truncateText(text: string): string {
+    const MAX_CHARS = 2000; // Ultra-conservative limit for 8192 tokens (~500 tokens)
+    
+    if (text.length <= MAX_CHARS) {
+      return text;
+    }
+    
+    // Truncate and add marker
+    const truncated = text.substring(0, MAX_CHARS);
+    console.warn(
+      `[${this.id}] Text truncated from ${text.length} to ${MAX_CHARS} chars to fit context`
+    );
+    
+    return truncated;
+  }
+
+  /**
+   * Sanitize text to prevent NaN errors in embedding models
+   * 
+   * Removes:
+   * - Control characters (U+0000 to U+001F, U+007F)
+   * - Replacement character U+FFFD (indicates broken UTF-8)
+   * - ONLY unpaired surrogate halves (invalid UTF-16)
+   * - Zero-width and non-printable characters
+   * 
+   * Preserves valid Unicode (emojis, accented chars, CJK, etc.)
+   */
+  private sanitizeText(text: string): string {
+    // Step 1: Remove control characters and replacement char
+    let sanitized = text
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
+      .replace(/\uFFFD/g, " ");
+    
+    // Step 2: Remove UNPAIRED surrogate halves only (preserve valid pairs for emojis)
+    // Valid pair: High surrogate (D800-DBFF) followed by Low surrogate (DC00-DFFF)
+    sanitized = sanitized.replace(
+      /([\uD800-\uDBFF](?![\uDC00-\uDFFF]))|((?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/g,
+      " "
+    );
+    
+    // Step 3: Remove zero-width and non-printable chars
+    sanitized = sanitized
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Zero-width spaces
+      .replace(/\u00A0/g, " "); // Non-breaking space → normal space
+    
+    return sanitized;
+  }
+
+  /**
+   * Queue Ollama requests to prevent overwhelming the server
+   */
+  private async queueOllamaRequest<T>(fn: () => Promise<T>): Promise<T> {
+    // Chain this request after the previous one
+    const prevQueue = AISDKEmbeddingProvider.ollamaQueue;
+    
+    // Create new promise that waits for previous + delay
+    const currentPromise = prevQueue
+      .then(() => sleep(AISDKEmbeddingProvider.OLLAMA_DELAY_MS))
+      .then(fn)
+      .catch((err) => {
+        throw err; // Re-throw to maintain error handling
+      });
+    
+    // Update queue
+    AISDKEmbeddingProvider.ollamaQueue = currentPromise.catch(() => {}); // Prevent unhandled rejection
+    
+    return currentPromise;
+  }
+
+  /**
    * Embed a single text query
    */
   async embedQuery(text: string): Promise<number[]> {
@@ -216,23 +293,43 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
         () =>
           withRetry(
             async () => {
-              // Ollama: Custom direct API call (no AI SDK)
+              // Ollama: Custom direct API call (no AI SDK) with rate limiting
               if (this.providerType === "ollama") {
-                const response = await fetch(`${this.baseURL}/api/embeddings`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    model: this.model,
-                    prompt: text,
-                  }),
+                return this.queueOllamaRequest(async () => {
+                  const inputText = this.sanitizeText(this.truncateText(text));
+                  
+                  const response = await fetch(`${this.baseURL}/api/embed`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      model: this.model,
+                      input: inputText,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+                  }
+
+                  const data = await response.json() as {
+                    embeddings?: number[][];
+                    embedding?: number[];
+                  };
+                  const embedding = Array.isArray(data.embeddings)
+                    ? data.embeddings[0]
+                    : data.embedding;
+                  
+                  // Validate embedding: check for NaN or invalid values
+                  if (!embedding || !Array.isArray(embedding)) {
+                    throw new Error("Invalid embedding response: missing or invalid embedding array");
+                  }
+                  
+                  if (embedding.some(v => isNaN(v) || !isFinite(v))) {
+                    throw new Error("Invalid embedding response: contains NaN or Infinity values");
+                  }
+                  
+                  return embedding;
                 });
-
-                if (!response.ok) {
-                  throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-                }
-
-                const data = await response.json() as { embedding: number[] };
-                return data.embedding;
               }
 
               // Other providers: Use AI SDK
@@ -291,14 +388,75 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
       return [];
     }
 
-    // Ollama: Sequential calls (no batch API)
+    // Ollama: Prefer native batch endpoint (/api/embed with input array)
     if (this.providerType === "ollama") {
-      const embeddings: number[][] = [];
-      for (const text of texts) {
-        const embedding = await this.embedQuery(text);
-        embeddings.push(embedding);
+      try {
+        return await withTimeout(
+          () =>
+            withRetry(
+              async () => {
+                const response = await fetch(`${this.baseURL}/api/embed`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    model: this.model,
+                    input: texts.map((t) => this.sanitizeText(this.truncateText(t))),
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error(
+                    `Ollama batch API error: ${response.status} ${response.statusText}`,
+                  );
+                }
+
+                const data = (await response.json()) as {
+                  embeddings?: number[][];
+                  embedding?: number[];
+                };
+
+                const output = Array.isArray(data.embeddings)
+                  ? data.embeddings
+                  : Array.isArray(data.embedding)
+                    ? [data.embedding]
+                    : null;
+
+                if (!output || output.length !== texts.length) {
+                  throw new Error(
+                    `Invalid Ollama batch embedding response (expected ${texts.length} embeddings)`
+                  );
+                }
+
+                for (const emb of output) {
+                  if (!Array.isArray(emb)) {
+                    throw new Error("Invalid embedding in batch response");
+                  }
+                  if (emb.some((v) => isNaN(v) || !isFinite(v))) {
+                    throw new Error(
+                      "Invalid embedding response: contains NaN or Infinity values",
+                    );
+                  }
+                }
+
+                return output;
+              },
+              this.retryConfig,
+              `[${this.id}] embedBatch (${texts.length} texts)`,
+            ),
+          this.timeout,
+          `[${this.id}] embedBatch`,
+        );
+      } catch (error) {
+        console.warn(
+          `[${this.id}] Ollama batch endpoint unavailable, falling back to sequential embeds: ${(error as Error).message}`,
+        );
+        const embeddings: number[][] = [];
+        for (const text of texts) {
+          const embedding = await this.embedQuery(text);
+          embeddings.push(embedding);
+        }
+        return embeddings;
       }
-      return embeddings;
     }
 
     // Other providers: Use AI SDK batch

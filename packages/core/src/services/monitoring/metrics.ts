@@ -1,5 +1,5 @@
 /**
- * Monitoring and Metrics System for MCP RLM Mem0
+ * Monitoring and Metrics System for th0th MCP
  *
  * Tracks:
  * - Embedding usage (calls, tokens, cache hits)
@@ -459,7 +459,7 @@ export class MetricsCollector {
   getSummary(): string {
     const m = this.currentMetrics;
 
-    let summary = "\n📊 MCP RLM Mem0 - Metrics Summary\n";
+    let summary = "\n📊 th0th MCP - Metrics Summary\n";
     summary += "=".repeat(60) + "\n\n";
 
     // Period

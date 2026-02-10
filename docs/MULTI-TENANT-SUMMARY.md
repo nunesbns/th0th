@@ -44,8 +44,8 @@ Este projeto agora possui documentação completa sobre arquitetura multi-tenant
 
 ```bash
 # 1. Clone e instale
-git clone https://github.com/your-org/mcp-rlm-mem0.git
-cd mcp-rlm-mem0
+git clone https://github.com/your-org/th0th-mcp.git
+cd th0th-mcp
 npm install
 
 # 2. Configure multi-tenant
@@ -66,7 +66,7 @@ npm start
   "mcpServers": {
     "rlm-memory": {
       "command": "node",
-      "args": ["/path/to/mcp-rlm-mem0/build/server.js"],
+      "args": ["/path/to/th0th-mcp/build/server.js"],
       "env": {
         "MULTI_TENANT_ENABLED": "true"
       }
@@ -215,9 +215,9 @@ Encontrou um problema? Tem uma sugestão?
 
 - **Documentação:** [docs/](.)
 - **Exemplos:** [15-multi-tenant-examples.md](./15-multi-tenant-examples.md)
-- **Issues:** [GitHub Issues](https://github.com/your-org/mcp-rlm-mem0/issues)
+- **Issues:** [GitHub Issues](https://github.com/your-org/th0th-mcp/issues)
 
 ---
 
-**Criado com:** RLM (Retrieval Language Model) do MCP RLM Mem0
+**Criado com:** RLM (Retrieval Language Model) do th0th MCP
 **Última atualização:** 2026-02-01

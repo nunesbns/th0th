@@ -11,14 +11,14 @@ O servidor MCP atua como ponte entre o OpenCode e o sistema de memória.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const server = new McpServer({
-  name: 'rlm-mem0-server',
+  name: 'rlm-memory-server',
   version: '1.0.0'
 });
 ```
 
 **Tools expostas:**
 - `get_optimized_context` - Recupera contexto com economia de tokens
-- `store_memory` - Armazena memória no Mem0
+- `store_memory` - Armazena memória no memoria local
 - `search_code` - Busca código relevante
 - `compress_context` - Comprime contexto existente
 
@@ -32,14 +32,14 @@ const server = new McpServer({
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
-│ NÍVEL 3: MEMÓRIA DE SESSÃO (Mem0 Session)                   │
+│ NÍVEL 3: MEMÓRIA DE SESSÃO (memoria local Session)                   │
 │ • Conversa atual                                            │
 │ • Últimas N interações                                      │
-│ • Armazenado no Mem0                                        │
+│ • Armazenado no memoria local                                        │
 └───────────────────────────┬─────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
-│ NÍVEL 2: MEMÓRIA DO USUÁRIO (Mem0 User)                     │
+│ NÍVEL 2: MEMÓRIA DO USUÁRIO (memoria local User)                     │
 │ • Preferências do desenvolvedor                             │
 │ • Padrões de código identificados                           │
 │ • Decisões arquiteturais passadas                           │
@@ -123,8 +123,8 @@ class HybridSearch {
         │
         ▼
 3. Recuperação paralela
-   ├─→ Mem0 User Memory (preferências)
-   ├─→ Mem0 Session Memory (conversa)
+   ├─→ memoria local User Memory (preferências)
+   ├─→ memoria local Session Memory (conversa)
    ├─→ Vector DB (código relevante)
    └─→ Cache local (resultados recentes)
         │
@@ -163,7 +163,7 @@ class HybridSearch {
         │
         ▼
 4. Armazenamento
-   ├─→ Mem0.ai (memórias persistentes)
+   ├─→ camada de memoria local (memórias persistentes)
    ├─→ Vector DB (embeddings)
    └─→ SQLite (metadados)
         │
@@ -242,8 +242,8 @@ interface CacheHierarchy {
   // L2: SQLite (persistente)
   l2: SQLiteCache;
   
-  // L3: Mem0 (compartilhado)
-  l3: Mem0Cache;
+  // L3: memoria local (compartilhado)
+  l3: memoria localCache;
 }
 ```
 
@@ -278,7 +278,7 @@ sequenceDiagram
     participant User
     participant OpenCode
     participant MCPServer
-    participant Mem0
+    participant memoria local
     participant VectorDB
     participant Cache
 
@@ -286,11 +286,11 @@ sequenceDiagram
     OpenCode->>MCPServer: get_optimized_context()
     
     par Recuperação Paralela
-        MCPServer->>Mem0: search user memory
-        Mem0-->>MCPServer: preferências
+        MCPServer->>memoria local: search user memory
+        memoria local-->>MCPServer: preferências
         
-        MCPServer->>Mem0: search session memory
-        Mem0-->>MCPServer: conversa recente
+        MCPServer->>memoria local: search session memory
+        memoria local-->>MCPServer: conversa recente
         
         MCPServer->>Cache: get cached context
         Cache-->>MCPServer: cache miss
@@ -312,7 +312,7 @@ sequenceDiagram
 | Otimização | Impacto | Implementação |
 |------------|---------|---------------|
 | Lazy loading | -50% memória | Carrega apenas quando necessário |
-| Connection pooling | -30% latência | Reusa conexões Mem0/DB |
+| Connection pooling | -30% latência | Reusa conexões memoria local/DB |
 | Batch processing | -40% chamadas | Agrupa operações similares |
 | Async I/O | -60% tempo total | Operações não-bloqueantes |
 

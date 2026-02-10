@@ -93,7 +93,7 @@ Você projeta a estrutura que outros implementarão.
   "type": "architecture",
   "description": "Projetar arquitetura do MCP Server para RLM",
   "requirements": [
-    "Integração hibrido com Mem0.ai",
+    "Integração hibrido com camada de memoria local",
     "Sistema de compressão semântica",
     "Cache hierárquico",
     "Busca híbrida (vetorial + keyword)"
@@ -120,7 +120,7 @@ Você projeta a estrutura que outros implementarão.
       },
       {
         "name": "Service Layer",
-        "components": ["Mem0 Client", "Compression Service", "Cache Manager"],
+        "components": ["memoria local Client", "Compression Service", "Cache Manager"],
         "responsibilities": ["Orquestrar operações", "Aplicar regras de negócio"]
       },
       {

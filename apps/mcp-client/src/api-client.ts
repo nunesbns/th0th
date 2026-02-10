@@ -30,6 +30,24 @@ export class ApiClient {
    * POST request to Tools API
    */
   async post(endpoint: string, body: unknown): Promise<unknown> {
+    return this.request("POST", endpoint, body);
+  }
+
+  /**
+   * GET request to Tools API
+   */
+  async get(endpoint: string): Promise<unknown> {
+    return this.request("GET", endpoint);
+  }
+
+  /**
+   * Generic HTTP request to Tools API
+   */
+  private async request(
+    method: "GET" | "POST",
+    endpoint: string,
+    body?: unknown,
+  ): Promise<unknown> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
@@ -46,9 +64,9 @@ export class ApiClient {
         }
 
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
-          method: "POST",
+          method,
           headers,
-          body: JSON.stringify(body),
+          body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
         });
 

@@ -61,7 +61,22 @@ class McpProxyServer {
         }
 
         // Proxy to API
-        const response = await this.apiClient.post(toolDef.apiEndpoint, args);
+        let response;
+        if (toolDef.apiMethod === "GET") {
+          // For GET requests, construct URL with path parameters
+          let endpoint = toolDef.apiEndpoint;
+          const params = args as Record<string, any>;
+          
+          // Replace :param with actual values
+          Object.keys(params).forEach((key) => {
+            endpoint = endpoint.replace(`:${key}`, encodeURIComponent(params[key]));
+          });
+          
+          response = await this.apiClient.get(endpoint);
+        } else {
+          // POST request with body
+          response = await this.apiClient.post(toolDef.apiEndpoint, args);
+        }
 
         // Format response for MCP
         const responseData = response as any;

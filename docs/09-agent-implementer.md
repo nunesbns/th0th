@@ -126,7 +126,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 export async function startServer(): Promise<void> {
   const server = new McpServer({
-    name: 'rlm-mem0-server',
+    name: 'rlm-memory-server',
     version: '1.0.0'
   });
   
@@ -134,16 +134,16 @@ export async function startServer(): Promise<void> {
 }
 ```
 
-### Task 2: Implementar Cliente Mem0
+### Task 2: Implementar Cliente memoria local
 
 **Input:**
 ```json
 {
   "task_id": "impl-002",
   "type": "implementation",
-  "description": "Implementar cliente Mem0.ai",
+  "description": "Implementar cliente camada de memoria local",
   "requirements": [
-    "Conexão com API Mem0",
+    "Conexão com API memoria local",
     "Métodos: add, search, update, delete",
     "Tratamento de erros",
     "Retry logic"
@@ -152,7 +152,7 @@ export async function startServer(): Promise<void> {
 ```
 
 **Output Esperado:**
-- Classe `Mem0Integration`
+- Classe `memoria localIntegration`
 - Métodos: `addMemory`, `searchMemories`, `updateMemory`, `deleteMemory`
 - Testes unitários
 - Tratamento de erros
@@ -243,12 +243,12 @@ export class SemanticCompressor {
 
 ```
 Orquestrador (Mistral):
-"Implemente o cliente Mem0 seguindo a arquitetura 
+"Implemente o cliente memoria local seguindo a arquitetura 
 definida pelo Arquiteto. Precisa de: conexão API, 
 métodos CRUD, e tratamento de erros."
 
 Implementador (GPT-4):
-"Vou implementar a classe Mem0Integration com:
+"Vou implementar a classe memoria localIntegration com:
 1. Construtor com configuração
 2. Método addMemory com retry
 3. Método searchMemories com filtros
@@ -268,7 +268,7 @@ src/
 ├── server.ts             # MCP Server
 ├── config.ts             # Configurações
 ├── types.ts              # Tipos
-├── mem0-client.ts        # Cliente Mem0
+├── memory-client.ts        # Cliente memoria local
 ├── compression.ts        # Compressão
 ├── cache.ts              # Cache
 ├── router.ts             # Router

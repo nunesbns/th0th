@@ -1,14 +1,14 @@
-# Arquitetura Alternativa: MCP RLM Sem Mem0 (Standalone)
+# Arquitetura Alternativa: MCP RLM Sem memoria local (Standalone)
 
 ## Visão Geral
 
-Esta arquitetura alternativa implementa o sistema MCP RLM **sem dependência obrigatória do Mem0.ai**, tornando-o um componente **opcional/complementar**. O sistema funciona completamente standalone usando apenas recursos locais.
+Esta arquitetura alternativa implementa o sistema MCP RLM **sem dependência obrigatória do camada de memoria local**, tornando-o um componente **opcional/complementar**. O sistema funciona completamente standalone usando apenas recursos locais.
 
-## Arquitetura Standalone vs Com Mem0
+## Arquitetura Standalone vs Com memoria local
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│           VERSÃO STANDALONE (Sem Mem0)                          │
+│           VERSÃO STANDALONE (Sem memoria local)                          │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │              CAMADA DE MEMÓRIA LOCAL                     │   │
@@ -33,20 +33,20 @@ Esta arquitetura alternativa implementa o sistema MCP RLM **sem dependência obr
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│           VERSÃO COMPLEMENTAR (Com Mem0)                        │
+│           VERSÃO COMPLEMENTAR (Com memoria local)                        │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │              CAMADA DE MEMÓRIA HÍBRIDA                   │   │
 │  │                                                          │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │   │
-│  │  │    Local     │  │    Mem0      │  │   Sincronia  │  │   │
+│  │  │    Local     │  │    memoria local      │  │   Sincronia  │  │   │
 │  │  │   (SQLite)   │  │   (Cloud)    │  │   (Auto)     │  │   │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘  │   │
 │  │                                                          │   │
 │  │  • Memória local para performance                       │   │
-│  │  • Mem0 para persistência avançada                      │   │
+│  │  • memoria local para persistência avançada                      │   │
 │  │  • Sincronização automática                             │   │
-│  │  • Fallback para local se Mem0 falhar                   │   │
+│  │  • Fallback para local se memoria local falhar                   │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 │  ✓ Memória entre dispositivos                                   │
@@ -135,7 +135,7 @@ class LocalMemoryManager {
 ### 2. SQLite Schema (Standalone)
 
 ```sql
--- Schema completo sem dependência de Mem0
+-- Schema completo sem dependência de memoria local
 
 -- Memórias de sessão (temporárias)
 CREATE TABLE session_memories (
@@ -208,18 +208,18 @@ CREATE TABLE code_index (
 ```typescript
 // src/config/modes.ts
 
-type OperationMode = 'standalone' | 'hybrid' | 'mem0-only';
+type OperationMode = 'standalone' | 'hybrid' | 'memory-only';
 
 interface ModeConfig {
   mode: OperationMode;
   features: {
     localMemory: boolean;
-    mem0Integration: boolean;
+    memoryIntegration: boolean;
     cloudSync: boolean;
     crossDevice: boolean;
   };
   fallbacks: {
-    onMem0Failure: 'local' | 'error' | 'retry';
+    onmemoria localFailure: 'local' | 'error' | 'retry';
     onNetworkFailure: 'offline' | 'error';
   };
 }
@@ -229,12 +229,12 @@ const MODE_CONFIGS: Record<OperationMode, ModeConfig> = {
     mode: 'standalone',
     features: {
       localMemory: true,
-      mem0Integration: false,
+      memoryIntegration: false,
       cloudSync: false,
       crossDevice: false
     },
     fallbacks: {
-      onMem0Failure: 'local',
+      onmemoria localFailure: 'local',
       onNetworkFailure: 'offline'
     }
   },
@@ -243,26 +243,26 @@ const MODE_CONFIGS: Record<OperationMode, ModeConfig> = {
     mode: 'hybrid',
     features: {
       localMemory: true,
-      mem0Integration: true,
+      memoryIntegration: true,
       cloudSync: true,
       crossDevice: true
     },
     fallbacks: {
-      onMem0Failure: 'local',
+      onmemoria localFailure: 'local',
       onNetworkFailure: 'offline'
     }
   },
   
-  'mem0-only': {
-    mode: 'mem0-only',
+  'memory-only': {
+    mode: 'memory-only',
     features: {
       localMemory: false,
-      mem0Integration: true,
+      memoryIntegration: true,
       cloudSync: true,
       crossDevice: true
     },
     fallbacks: {
-      onMem0Failure: 'error',
+      onmemoria localFailure: 'error',
       onNetworkFailure: 'error'
     }
   }
@@ -271,13 +271,13 @@ const MODE_CONFIGS: Record<OperationMode, ModeConfig> = {
 // Seletor de modo
 class ModeSelector {
   static detectMode(): OperationMode {
-    // Se Mem0 não configurado → standalone
-    if (!process.env.MEM0_API_KEY) {
-      console.log('🔧 Modo STANDALONE ativado (Mem0 não configurado)');
+    // Se memoria local não configurado → standalone
+    if (!process.env.CLOUD_SYNC_API_KEY) {
+      console.log('🔧 Modo STANDALONE ativado (memoria local não configurado)');
       return 'standalone';
     }
     
-    // Se Mem0 configurado mas preferência por local → hybrid
+    // Se memoria local configurado mas preferência por local → hybrid
     if (process.env.PREFER_LOCAL === 'true') {
       console.log('🔧 Modo HÍBRIDO ativado (preferência local)');
       return 'hybrid';
@@ -298,7 +298,7 @@ class ModeSelector {
 class UnifiedMemoryManager {
   private mode: OperationMode;
   private localManager: LocalMemoryManager;
-  private mem0Manager?: Mem0Integration;
+  private memoryManager?: memoria localIntegration;
   
   constructor(mode: OperationMode) {
     this.mode = mode;
@@ -309,9 +309,9 @@ class UnifiedMemoryManager {
       compressionEnabled: true
     });
     
-    // Mem0 apenas se modo híbrido ou mem0-only
+    // memoria local apenas se modo híbrido ou memory-only
     if (mode !== 'standalone') {
-      this.mem0Manager = new Mem0Integration();
+      this.memoryManager = new memoria localIntegration();
     }
   }
   
@@ -325,10 +325,10 @@ class UnifiedMemoryManager {
       entry
     );
     
-    // Se persistente e modo híbrido, sincroniza com Mem0
-    if (options.persistent && this.mem0Manager) {
+    // Se persistente e modo híbrido, sincroniza com memoria local
+    if (options.persistent && this.memoryManager) {
       try {
-        await this.mem0Manager.addMemory(
+        await this.memoryManager.addMemory(
           [{ role: 'user', content: entry.content }],
           entry.userId,
           entry.sessionId,
@@ -336,7 +336,7 @@ class UnifiedMemoryManager {
         );
       } catch (error) {
         // Fallback: apenas loga erro, mantém local
-        console.warn('Mem0 sync failed, keeping local only:', error);
+        console.warn('memoria local sync failed, keeping local only:', error);
       }
     }
     
@@ -359,10 +359,10 @@ class UnifiedMemoryManager {
     );
     results.push(...localResults);
     
-    // 2. Busca Mem0 (se disponível)
-    if (this.mem0Manager && this.mode !== 'standalone') {
+    // 2. Busca memoria local (se disponível)
+    if (this.memoryManager && this.mode !== 'standalone') {
       try {
-        const mem0Results = await this.mem0Manager.searchMemories(
+        const memoryResults = await this.memoryManager.searchMemories(
           query,
           options.userId,
           options.sessionId,
@@ -370,9 +370,9 @@ class UnifiedMemoryManager {
         );
         
         // Merge e deduplica resultados
-        results.push(...mem0Results);
+        results.push(...memoryResults);
       } catch (error) {
-        console.warn('Mem0 search failed, using local only:', error);
+        console.warn('memoria local search failed, using local only:', error);
       }
     }
     
@@ -405,7 +405,7 @@ class UnifiedMemoryManager {
 
 ## Fluxos de Uso
 
-### Fluxo 1: Standalone Puro (Sem Mem0)
+### Fluxo 1: Standalone Puro (Sem memoria local)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -445,12 +445,12 @@ Usuário faz query
 ✗ Sem sincronização
 ```
 
-### Fluxo 2: Híbrido (Com Mem0 Opcional)
+### Fluxo 2: Híbrido (Com memoria local Opcional)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ FLUXO HÍBRIDO                                               │
-│ Mem0 é complementar, não obrigatório                         │
+│ memoria local é complementar, não obrigatório                         │
 └─────────────────────────────────────────────────────────────┘
 
 Usuário faz query
@@ -463,7 +463,7 @@ Usuário faz query
          │ Miss
          ▼
 ┌─────────────────┐     ┌─────────────────┐
-│  Session Store  │────►│      Mem0       │ ◄── Tenta Mem0
+│  Session Store  │────►│      memoria local       │ ◄── Tenta memoria local
 │    (SQLite)     │     │    (Cloud)      │     (se configurado)
 └────────┬────────┘     └────────┬────────┘
          │ Miss                  │ Timeout/Erro
@@ -489,10 +489,10 @@ Usuário faz query
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ MIGRAÇÃO: Standalone → Híbrido                              │
-│ Quando usuário configura Mem0 posteriormente                 │
+│ Quando usuário configura memoria local posteriormente                 │
 └─────────────────────────────────────────────────────────────┘
 
-1. Usuário configura MEM0_API_KEY
+1. Usuário configura CLOUD_SYNC_API_KEY
         │
         ▼
 2. Sistema detecta mudança
@@ -503,7 +503,7 @@ Usuário faz query
    │ Para cada memória persistente local:   │
    │                                        │
    │ 1. Lê do SQLite                        │
-   │ 2. Envia para Mem0                     │
+   │ 2. Envia para memoria local                     │
    │ 3. Marca como sincronizado             │
    │ 4. Mantém cópia local (cache)          │
    └────────────────────────────────────────┘
@@ -525,8 +525,8 @@ Usuário faz query
 
 ```bash
 # .env
-# Deixe MEM0_API_KEY vazio ou comente
-# MEM0_API_KEY=
+# Deixe CLOUD_SYNC_API_KEY vazio ou comente
+# CLOUD_SYNC_API_KEY=
 
 # Ou defina explicitamente
 OPERATION_MODE=standalone
@@ -541,19 +541,19 @@ ENABLE_COMPRESSION=true
 
 ```bash
 # .env
-MEM0_API_KEY=sua-chave-aqui
+CLOUD_SYNC_API_KEY=sua-chave-aqui
 OPERATION_MODE=hybrid
 
 # Preferência: usar local quando possível
 PREFER_LOCAL=true
 
 # Fallback
-FALLBACK_ON_MEM0_ERROR=true
+FALLBACK_ON_SYNC_ERROR=true
 ```
 
 ## Comparação de Funcionalidades
 
-| Funcionalidade | Standalone | Híbrido | Mem0-Only |
+| Funcionalidade | Standalone | Híbrido | memoria local-Only |
 |----------------|------------|---------|-----------|
 | **Memória de trabalho** | ✅ | ✅ | ✅ |
 | **Memória de sessão** | ✅ | ✅ | ✅ |
@@ -583,7 +583,7 @@ FALLBACK_ON_MEM0_ERROR=true
 - ✅ Aceita custo moderado
 - ✅ Quer flexibilidade máxima
 
-### Use Mem0-Only quando:
+### Use memoria local-Only quando:
 - ✅ Sempre online
 - ✅ Múltiplos colaboradores
 - ✅ Infraestrutura cloud-native
@@ -621,7 +621,7 @@ async function main() {
   
   console.log('✅ Servidor MCP RLM pronto!');
   if (mode === 'standalone') {
-    console.log('💡 Dica: Configure MEM0_API_KEY para habilitar sincronização cloud');
+    console.log('💡 Dica: Configure CLOUD_SYNC_API_KEY para habilitar sincronização cloud');
   }
 }
 
@@ -636,4 +636,4 @@ A arquitetura standalone torna o MCP RLM **acessível a todos**, independente de
 - Preocupações com privacidade
 - Complexidade de setup
 
-O Mem0 torna-se um **upgrade opcional** que adiciona conveniência (sincronização, backup) sem ser obrigatório para o funcionamento básico do sistema.
+O memoria local torna-se um **upgrade opcional** que adiciona conveniência (sincronização, backup) sem ser obrigatório para o funcionamento básico do sistema.

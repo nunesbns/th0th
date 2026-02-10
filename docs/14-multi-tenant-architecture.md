@@ -1,11 +1,11 @@
-# Multi-Tenant Architecture no MCP RLM Mem0
+# Multi-Tenant Architecture no th0th MCP
 
 ## Índice
 
 1. [Visão Geral](#1-visão-geral)
 2. [Conceitos de Multi-Tenancy](#2-conceitos-de-multi-tenancy)
 3. [Arquitetura de Isolamento](#3-arquitetura-de-isolamento)
-4. [Implementação no MCP RLM Mem0](#4-implementação-no-mcp-rlm-mem0)
+4. [Implementação no th0th MCP](#4-implementação-no-th0th-mcp)
 5. [Estratégias de Isolamento](#5-estratégias-de-isolamento)
 6. [Segurança e Autorização](#6-segurança-e-autorização)
 7. [Performance e Escalabilidade](#7-performance-e-escalabilidade)
@@ -22,7 +22,7 @@
 
 Multi-tenancy é um padrão arquitetural onde uma única instância de software serve múltiplos clientes (tenants), mantendo isolamento completo de dados e configurações entre eles.
 
-### Por que usar Multi-Tenancy no MCP RLM Mem0?
+### Por que usar Multi-Tenancy no th0th MCP?
 
 **Benefícios:**
 
@@ -45,7 +45,7 @@ Multi-tenancy é um padrão arquitetural onde uma única instância de software 
 
 ### 2.1 Identificadores de Tenant
 
-No MCP RLM Mem0, utilizamos três níveis de identificação:
+No th0th MCP, utilizamos três níveis de identificação:
 
 ```typescript
 interface TenantContext {
@@ -77,7 +77,7 @@ Organization (implícito)
 | **Separate Schema**   | Schema dedicado por tenant              | Schema PostgreSQL        | Média-Alta   |
 | **Separate Database** | Banco dedicado por tenant               | Database completo        | Alta         |
 
-**No MCP RLM Mem0, utilizamos híbrido:**
+**No th0th MCP, utilizamos híbrido:**
 
 - **Shared Database** para cache e embeddings (otimização)
 - **Namespace Isolation** para memórias e contexto (segurança)
@@ -188,11 +188,11 @@ export class MemoryRepository {
 
 ---
 
-## 4. Implementação no MCP RLM Mem0
+## 4. Implementação no th0th MCP
 
 ### 4.1 Estrutura Atual
 
-O MCP RLM Mem0 **já possui primitivas** de multi-tenancy:
+O th0th MCP **já possui primitivas** de multi-tenancy:
 
 **Arquivo:** `src/server.ts:86-98`
 
@@ -1557,7 +1557,7 @@ async function rollback() {
 
 ## Conclusão
 
-Este documento apresentou uma arquitetura completa de multi-tenancy para o MCP RLM Mem0, incluindo:
+Este documento apresentou uma arquitetura completa de multi-tenancy para o th0th MCP, incluindo:
 
 ✅ **Isolamento de dados** em múltiplas camadas
 ✅ **Segurança** com autenticação, autorização e criptografia
@@ -1596,4 +1596,4 @@ Este documento apresentou uma arquitetura completa de multi-tenancy para o MCP R
 
 ---
 
-**Documento criado usando o sistema RLM (Retrieval Language Model) do MCP RLM Mem0**
+**Documento criado usando o sistema RLM (Retrieval Language Model) do th0th MCP**

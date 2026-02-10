@@ -443,4 +443,4 @@ This implementation follows patterns from OpenClaw's proven embedding system. Ke
 
 ## License
 
-Part of MCP RLM Mem0 project.
+Part of th0th MCP project.

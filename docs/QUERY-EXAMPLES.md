@@ -10,7 +10,7 @@ Este documento demonstra como usar o sistema RLM para consultar a documentação
 // No OpenCode, você pode usar:
 const context = await mcp.callTool('rlm-memory', 'get_optimized_context', {
   query: 'sua query aqui',
-  projectId: 'mcp-rlm-mem0',
+  projectId: 'th0th-mcp',
   userId: 'documentation-system',
   sessionId: 'multi-tenant-docs-session',
   maxTokens: 4000
@@ -23,7 +23,7 @@ const context = await mcp.callTool('rlm-memory', 'get_optimized_context', {
 
 **Query:**
 ```
-multi-tenant architecture MCP RLM Mem0 overview isolation layers TenantContext
+multi-tenant architecture th0th MCP overview isolation layers TenantContext
 ```
 
 **O que retorna:**
@@ -295,7 +295,7 @@ import { MultiTenantMcpClient } from './helpers/multi-tenant-client';
 
 const client = new MultiTenantMcpClient('stdio://...', {
   userId: 'documentation-system',
-  projectId: 'mcp-rlm-mem0'
+  projectId: 'th0th-mcp'
 });
 
 // Testar query
@@ -317,7 +317,7 @@ node -e "
 const { MultiTenantMcpClient } = require('./build/helpers/multi-tenant-client');
 const client = new MultiTenantMcpClient('stdio://...', {
   userId: 'documentation-system',
-  projectId: 'mcp-rlm-mem0'
+  projectId: 'th0th-mcp'
 });
 client.getOptimizedContext('TenantContext implementation', { maxTokens: 2000 })
   .then(r => console.log(r.data.context));

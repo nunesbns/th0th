@@ -3,6 +3,7 @@
  */
 
 export { IndexProjectTool } from "./index_project.js";
+export { GetIndexStatusTool } from "./get_index_status.js";
 export { SearchProjectTool } from "./search_project.js";
 export { SearchCodeTool } from "./search_code.js";
 export { GetAnalyticsTool } from "./get_analytics.js";

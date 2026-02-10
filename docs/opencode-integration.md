@@ -39,7 +39,7 @@ Adicione ao arquivo de configuração do OpenCode (`.opencode/config.json` ou si
 ```json
 {
   "mcpServers": {
-    "mcp-rlm-mem0": {
+    "th0th-mcp": {
       "mode": "directory",
       "directory": ".mcp-server",
       "debugUrl": "http://localhost:3030"
@@ -144,7 +144,7 @@ Server-Sent Events (SSE) para atualizações em tempo real
 
 ```typescript
 // No OpenCode, você pode acessar o servidor via:
-const mcpServer = opencode.getMCPServer("mcp-rlm-mem0");
+const mcpServer = opencode.getMCPServer("th0th-mcp");
 
 // Chamadas de ferramentas
 const result = await mcpServer.callTool("get_optimized_context", {

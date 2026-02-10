@@ -1,7 +1,7 @@
 /**
  * Cache Manager
  * 
- * Hierarchical cache implementation (L1: Memory, L2: SQLite, L3: Mem0)
+ * Hierarchical cache implementation (L1: Memory, L2: SQLite, L3: Remote)
  */
 
 import { ICacheManager, CacheStats } from '@th0th/shared';
@@ -32,12 +32,12 @@ export class CacheManager implements ICacheManager {
   constructor() {
     this.l1 = new L1MemoryCache();
     this.l2 = new L2SQLiteCache();
-    this.l3Enabled = false; // TODO: Integrate with Mem0
+    this.l3Enabled = false; // TODO: Integrate with remote L3 cache
     
     logger.info('Cache Manager initialized', {
       l1: 'Memory',
       l2: 'SQLite',
-      l3: this.l3Enabled ? 'Mem0' : 'Disabled'
+      l3: this.l3Enabled ? 'Remote' : 'Disabled'
     });
   }
 
@@ -67,7 +67,7 @@ export class CacheManager implements ICacheManager {
       }
       this.stats.l2Misses++;
 
-      // Try L3 (Mem0) if enabled
+      // Try L3 (remote) if enabled
       if (this.l3Enabled) {
         // TODO: Implement L3 lookup
         this.stats.l3Misses++;

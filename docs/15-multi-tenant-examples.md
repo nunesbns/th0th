@@ -1,4 +1,4 @@
-# Exemplos Práticos: Multi-Tenant no MCP RLM Mem0
+# Exemplos Práticos: Multi-Tenant no th0th MCP
 
 Este documento complementa o [14-multi-tenant-architecture.md](./14-multi-tenant-architecture.md) com exemplos práticos prontos para uso.
 
@@ -18,8 +18,8 @@ Este documento complementa o [14-multi-tenant-architecture.md](./14-multi-tenant
 
 ```bash
 # Clone o repositório
-git clone https://github.com/your-org/mcp-rlm-mem0.git
-cd mcp-rlm-mem0
+git clone https://github.com/your-org/th0th-mcp.git
+cd th0th-mcp
 
 # Instale dependências
 npm install
@@ -42,7 +42,7 @@ npm run dev
 import { McpClient } from "@modelcontextprotocol/sdk/client";
 
 const client = new McpClient({
-  serverUrl: "stdio://path/to/mcp-rlm-mem0/build/server.js",
+  serverUrl: "stdio://path/to/th0th-mcp/build/server.js",
 });
 
 // Definir contexto do tenant
@@ -84,7 +84,7 @@ console.log("Context:", context.data.context);
   "mcpServers": {
     "rlm-memory": {
       "command": "node",
-      "args": ["/caminho/para/mcp-rlm-mem0/build/server.js"],
+      "args": ["/caminho/para/th0th-mcp/build/server.js"],
       "env": {
         "MULTI_TENANT_ENABLED": "true",
         "OPERATION_MODE": "standalone",
@@ -103,7 +103,7 @@ console.log("Context:", context.data.context);
   "mcpServers": {
     "rlm-project-a": {
       "command": "node",
-      "args": ["/caminho/para/mcp-rlm-mem0/build/server.js"],
+      "args": ["/caminho/para/th0th-mcp/build/server.js"],
       "env": {
         "MULTI_TENANT_ENABLED": "true",
         "DEFAULT_PROJECT_ID": "project-a",
@@ -114,7 +114,7 @@ console.log("Context:", context.data.context);
     },
     "rlm-project-b": {
       "command": "node",
-      "args": ["/caminho/para/mcp-rlm-mem0/build/server.js"],
+      "args": ["/caminho/para/th0th-mcp/build/server.js"],
       "env": {
         "MULTI_TENANT_ENABLED": "true",
         "DEFAULT_PROJECT_ID": "project-b",

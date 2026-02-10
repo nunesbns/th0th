@@ -1,11 +1,11 @@
 # Estrutura do Projeto
 
-Visão geral da organização de código do MCP RLM Mem0 Server.
+Visão geral da organização de código do th0th MCP Server.
 
 ## Árvore de Diretórios
 
 ```
-mcp-rlm-mem0/
+th0th-mcp/
 ├── src/
 │   ├── api/                    # API Layer (MCP Interface)
 │   │   ├── tools/             # MCP Tools
@@ -18,7 +18,7 @@ mcp-rlm-mem0/
 │   │       └── config.ts
 │   │
 │   ├── services/              # Service Layer (Business Logic)
-│   │   ├── mem0/             # Mem0 Integration
+│   │   ├── memory/             # memoria local Integration
 │   │   │   ├── client.ts
 │   │   │   ├── user-memory.ts
 │   │   │   └── session-memory.ts
@@ -30,7 +30,7 @@ mcp-rlm-mem0/
 │   │       ├── cache-manager.ts
 │   │       ├── l1-memory-cache.ts
 │   │       ├── l2-sqlite-cache.ts
-│   │       └── l3-mem0-cache.ts
+│   │       └── l3-memory-cache.ts
 │   │
 │   ├── data/                  # Data Layer (Persistence)
 │   │   ├── chromadb/         # Vector Store
@@ -262,7 +262,7 @@ function fetchData(): Promise<Data> {
 | **Strategy** | `src/services/compression/` | Múltiplas estratégias de compressão |
 | **Factory** | `src/models/Memory.ts` | Criação de diferentes tipos de memória |
 | **Dependency Injection** | Todo o projeto | Testabilidade e desacoplamento |
-| **Adapter** | `src/services/mem0/client.ts` | Wrapper para API externa |
+| **Adapter** | `src/services/memory/client.ts` | Wrapper para API externa |
 | **Singleton** | `src/config/index.ts` | Config global |
 
 ## Fluxo de Dados Típico

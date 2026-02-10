@@ -34,9 +34,9 @@ export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
   
   ollama: {
     provider: "ollama",
-    model: process.env.OLLAMA_EMBEDDING_MODEL || "bge-m3",
+    model: process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text:latest",
     baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    dimensions: 1024, // bge-m3 is 1024 dimensions
+    dimensions: Number(process.env.OLLAMA_EMBEDDING_DIMENSIONS || "1024"),
     priority: 1, // Highest priority (local, fast, free)
     timeout: 300000, // 5 minutes (local can be slow on first run)
     maxRetries: 2,

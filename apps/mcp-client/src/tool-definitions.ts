@@ -54,6 +54,23 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "get_index_status",
+    description:
+      "Get the status of a background indexing job by its jobId. Use this after calling index_project to check progress.",
+    apiEndpoint: "/api/v1/project/index/status/:jobId",
+    apiMethod: "GET",
+    inputSchema: {
+      type: "object",
+      properties: {
+        jobId: {
+          type: "string",
+          description: "Job ID returned from index_project",
+        },
+      },
+      required: ["jobId"],
+    },
+  },
+  {
     name: "search_project",
     description:
       "Search for code in an indexed project using semantic and keyword search",
@@ -91,8 +108,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         autoReindex: {
           type: "boolean",
           description:
-            "Automatically reindex if project index is stale (checks file mtimes)",
-          default: true,
+            "Automatically reindex if project index is stale (can increase latency)",
+          default: false,
         },
         include: {
           type: "array",

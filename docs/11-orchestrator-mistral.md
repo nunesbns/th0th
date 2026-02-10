@@ -177,7 +177,7 @@ Não toca os instrumentos, mas coordena para criar sinfonia.
 **Usuário:**
 ```
 Preciso implementar um sistema completo de memória 
-recursiva com compressão, cache e integração Mem0.
+recursiva com compressão, cache e integração memoria local.
 ```
 
 **Orquestrador (Mistral):**
@@ -198,7 +198,7 @@ recursiva com compressão, cache e integração Mem0.
       },
       {
         "agent": "IMPLEMENTADOR (GPT-4 Turbo)",
-        "task": "Implementar componentes: Mem0 client, compressor, cache",
+        "task": "Implementar componentes: memoria local client, compressor, cache",
         "rationale": "Requer código de produção robusto"
       },
       {

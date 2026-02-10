@@ -61,8 +61,8 @@ export class SearchProjectTool implements IToolHandler {
       },
       autoReindex: {
         type: "boolean",
-        description: "Automatically reindex if project index is stale (checks file mtimes)",
-        default: true,
+        description: "Automatically reindex if project index is stale (can increase latency)",
+        default: false,
       },
       include: {
         type: "array",
@@ -162,13 +162,15 @@ export class SearchProjectTool implements IToolHandler {
       maxResults = 10,
       minScore = 0.3,
       responseMode = "summary",
-      autoReindex = true,
+      autoReindex = false,
       include,
       exclude,
       explainScores = false,
     } = params as SearchProjectParams;
 
     try {
+      const startTime = Date.now();
+
       logger.info("Starting project search", {
         query,
         projectId,
@@ -180,15 +182,37 @@ export class SearchProjectTool implements IToolHandler {
       // Check index freshness and reindex if needed
       let reindexInfo = null;
       if (autoReindex && projectPath) {
+        const freshnessStart = Date.now();
         reindexInfo = await this.contextualSearch.ensureFreshIndex(
           projectId,
           projectPath,
+          {
+            allowFullReindex: false,
+            maxSyncFiles: 50,
+          },
         );
-        
+
+        logger.info("Index freshness check completed", {
+          projectId,
+          latencyMs: Date.now() - freshnessStart,
+          wasStale: reindexInfo.wasStale,
+          reindexed: reindexInfo.reindexed,
+          reason: reindexInfo.reason,
+          deferred: (reindexInfo as any).deferred || false,
+          filesPending: (reindexInfo as any).filesPending || 0,
+        });
+
         if (reindexInfo.reindexed) {
           logger.info("Index was stale and reindexed", {
             projectId,
             reason: reindexInfo.reason,
+          });
+        } else if ((reindexInfo as any).deferred) {
+          logger.warn("Reindex deferred to avoid request timeout", {
+            projectId,
+            reason: reindexInfo.reason,
+            filesPending: (reindexInfo as any).filesPending || 0,
+            hint: "Use th0th_index_project + th0th_get_index_status for full indexing",
           });
         }
       }
@@ -202,6 +226,7 @@ export class SearchProjectTool implements IToolHandler {
       logger.info("Project search completed", {
         projectId,
         resultCount: results.length,
+        totalLatencyMs: Date.now() - startTime,
       });
 
       // Apply glob pattern filtering
@@ -248,6 +273,13 @@ export class SearchProjectTool implements IToolHandler {
           responseMode,
           tokenSavings: responseMode === "summary" ? "~70% vs full mode" : "none",
           indexStatus: reindexInfo || { wasStale: false, reindexed: false },
+          recommendations:
+            (reindexInfo as any)?.deferred
+              ? [
+                  "Indexing deferred to keep this search responsive",
+                  "Run th0th_index_project(projectPath, projectId) and poll th0th_get_index_status(jobId)",
+                ]
+              : [],
           filters: {
             applied: (include && include.length > 0) || (exclude && exclude.length > 0),
             include: include || [],

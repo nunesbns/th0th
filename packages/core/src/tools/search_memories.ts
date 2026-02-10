@@ -14,6 +14,7 @@ import path from "path";
 import fs from "fs";
 import { EmbeddingService } from "../data/chromadb/vector-store.js";
 import { encode as toTOON } from "@toon-format/toon";
+import { memoryConsolidationJob } from "../services/jobs/memory-consolidation-job.js";
 
 interface SearchMemoriesParams {
   query: string;
@@ -41,6 +42,7 @@ interface Memory {
   tags: string[];
   createdAt: number;
   accessCount: number;
+  lastAccessed: number | null;
   score?: number; // Similarity score
   embedding?: any; // Raw embedding for semantic ranking
 }
@@ -215,6 +217,9 @@ export class SearchMemoriesTool implements IToolHandler {
       // Step 4: Update access counts
       this.updateAccessCounts(rankedResults.map((r) => r.id));
 
+      // Opportunistic background consolidation (non-blocking)
+      memoryConsolidationJob.maybeRun("search");
+
       logger.info("Memories found", {
         total: rankedResults.length,
         topScore: rankedResults[0]?.score || 0,
@@ -327,7 +332,7 @@ export class SearchMemoriesTool implements IToolHandler {
         m.id, m.content, m.type, m.level,
         m.user_id, m.session_id, m.project_id, m.agent_id,
         m.importance, m.tags, m.embedding,
-        m.created_at, m.access_count
+        m.created_at, m.access_count, m.last_accessed
       FROM memories m
       JOIN memories_fts fts ON m.rowid = fts.rowid
       ${whereClause}
@@ -368,9 +373,24 @@ export class SearchMemoriesTool implements IToolHandler {
       const canCalculateSimilarity =
         isValidEmbedding && embedding.length === queryEmbedding.length;
 
-      const score = canCalculateSimilarity
+      const semanticScore = canCalculateSimilarity
         ? this.cosineSimilarity(queryEmbedding, embedding)
         : 0.5; // Default score for incompatible or missing embeddings
+
+      const temporalScore = this.calculateTemporalScore(memory);
+      const accessBoost = this.calculateAccessBoost(memory.accessCount || 0);
+      const typeBoost = this.calculateTypeBoost(memory.type);
+
+      // Stability-plasticity balance:
+      // - semantic: 65% (plasticity)
+      // - temporal recency: 20%
+      // - access reinforcement: 10%
+      // - type prior: 5%
+      const score =
+        semanticScore * 0.65 +
+        temporalScore * 0.2 +
+        accessBoost * 0.1 +
+        typeBoost * 0.05;
 
       return { ...memory, score };
     });
@@ -397,6 +417,49 @@ export class SearchMemoriesTool implements IToolHandler {
 
     const denominator = Math.sqrt(normA) * Math.sqrt(normB);
     return denominator === 0 ? 0 : dotProduct / denominator;
+  }
+
+  /**
+   * Adaptive forgetting curve inspired by Ebbinghaus.
+   * Recent memories score higher; old untouched memories decay smoothly.
+   */
+  private calculateTemporalScore(memory: Memory): number {
+    const now = Date.now();
+    const reference = memory.lastAccessed || memory.createdAt;
+    const ageHours = Math.max(0, (now - reference) / (1000 * 60 * 60));
+
+    // half-life ~72h: score halves every 3 days without reinforcement
+    const halfLifeHours = 72;
+    const decay = Math.pow(0.5, ageHours / halfLifeHours);
+    return Math.max(0.1, Math.min(1, decay));
+  }
+
+  /**
+   * Frequently accessed memories get reinforcement but with saturation.
+   */
+  private calculateAccessBoost(accessCount: number): number {
+    // log curve saturates after repeated accesses
+    const normalized = Math.log1p(Math.max(0, accessCount)) / Math.log(20);
+    return Math.max(0.1, Math.min(1, normalized));
+  }
+
+  /**
+   * Small priors for memory types that are usually more reusable.
+   */
+  private calculateTypeBoost(type: MemoryType): number {
+    switch (type) {
+      case MemoryType.DECISION:
+        return 1.0;
+      case MemoryType.PATTERN:
+        return 0.9;
+      case MemoryType.PREFERENCE:
+        return 0.85;
+      case MemoryType.CODE:
+        return 0.8;
+      case MemoryType.CONVERSATION:
+      default:
+        return 0.7;
+    }
   }
 
   /**
@@ -439,6 +502,7 @@ export class SearchMemoriesTool implements IToolHandler {
       tags: row.tags ? JSON.parse(row.tags) : [],
       createdAt: row.created_at,
       accessCount: row.access_count || 0,
+      lastAccessed: row.last_accessed || null,
       embedding: row.embedding, // Keep for semantic ranking
     };
   }

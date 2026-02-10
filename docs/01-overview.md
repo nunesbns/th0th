@@ -6,13 +6,13 @@ Este projeto implementa um **MCP Server (Model Context Protocol)** com **RLM (Re
 
 ### Modos de Operação
 
-| Modo | Memória | Mem0.ai | Uso Ideal |
+| Modo | Memória | camada de memoria local | Uso Ideal |
 |------|---------|---------|-----------|
 | **Standalone** | 100% Local | ❌ Não usa | Offline, privacidade máxima |
 | **Híbrido** | Local + Cloud | ✅ Opcional | Flexibilidade, sync entre devices |
-| **Cloud** | Mem0.ai | ✅ Obrigatório | Múltiplos dispositivos, backup |
+| **Cloud** | camada de memoria local | ✅ Obrigatório | Múltiplos dispositivos, backup |
 
-> **Nota:** Mem0.ai é **completamente opcional**. O sistema funciona 100% offline com SQLite local.
+> **Nota:** camada de memoria local é **completamente opcional**. O sistema funciona 100% offline com SQLite local.
 
 ## Arquitetura do Sistema (Standalone - Padrão)
 
@@ -75,18 +75,18 @@ Este projeto implementa um **MCP Server (Model Context Protocol)** com **RLM (Re
 - **MCP SDK** - Integração com OpenCode
 
 ### Opcional
-- **Mem0.ai** - Memória em nuvem (sincronização, backup)
+- **camada de memoria local** - Memória em nuvem (sincronização, backup)
 - **Redis** - Cache distribuído (opcional)
 
 ## Estrutura do Projeto
 
 ```
-mcp-rlm-mem0/
+th0th-mcp/
 ├── docs/                              # Documentação
 │   ├── 01-overview.md                # Este arquivo
 │   ├── 02-architecture.md            # Arquitetura detalhada
 │   ├── 03-optimization.md            # Estratégias de otimização
-│   ├── 04-mem0-integration.md        # Integração com Mem0 (OPCIONAL)
+│   ├── 04-memory-integration.md        # Integração com memoria local (OPCIONAL)
 │   ├── 05-implementation.md          # Guia de implementação
 │   ├── 06-api-reference.md           # Referência da API
 │   ├── 07-subagents-system.md        # Sistema de subsagentes
@@ -101,7 +101,7 @@ mcp-rlm-mem0/
 │   ├── memory/                       # Sistema de memória
 │   │   ├── local-memory.ts          # Memória local (standalone)
 │   │   ├── unified-manager.ts       # Manager unificado
-│   │   └── mem0-client.ts           # Cliente Mem0 (opcional)
+│   │   └── memory-client.ts           # Cliente memoria local (opcional)
 │   ├── compression.ts               # Compressão semântica
 │   ├── cache.ts                     # Sistema de cache
 │   ├── router.ts                    # Context router
@@ -120,11 +120,11 @@ mcp-rlm-mem0/
 1. **Para uso Standalone (Offline)**
    - Leia [13-standalone-architecture.md](./13-standalone-architecture.md)
    - Configure SQLite local
-   - Sem necessidade de Mem0
+   - Sem necessidade de memoria local
 
-2. **Para uso Híbrido (com Mem0 opcional)**
+2. **Para uso Híbrido (com memoria local opcional)**
    - Leia [02-architecture.md](./02-architecture.md) para arquitetura
-   - Consulte [04-mem0-integration.md](./04-mem0-integration.md) para Mem0
+   - Consulte [04-memory-integration.md](./04-memory-integration.md) para memoria local
    - Siga [05-implementation.md](./05-implementation.md) para implementar
 
 3. **Para desenvolvimento com subsagentes**
@@ -134,4 +134,4 @@ mcp-rlm-mem0/
 
 - [MCP Protocol](https://modelcontextprotocol.io)
 - [OpenCode](https://opencode.ai)
-- [Mem0.ai Documentation](https://docs.mem0.ai) (opcional)
+- [camada de memoria local Documentation](https://docs.memory.ai) (opcional)

@@ -64,6 +64,9 @@ export class SQLiteVectorStore implements IVectorStore {
         -- Index for project-based queries
         CREATE INDEX IF NOT EXISTS idx_vector_project_id ON vector_documents(project_id);
         
+        -- Composite index for incremental metadata lookups (critical for staleness checks)
+        CREATE INDEX IF NOT EXISTS idx_vector_project_file ON vector_documents(project_id, json_extract(metadata, '$.filePath'));
+        
         -- Index for content search
         CREATE INDEX IF NOT EXISTS idx_vector_content ON vector_documents(content);
         
@@ -158,8 +161,54 @@ export class SQLiteVectorStore implements IVectorStore {
       });
 
     } catch (error) {
-      logger.error('Failed to add batch documents', error as Error);
-      throw error;
+      logger.warn('Batch embedding failed, falling back to per-document embedding', {
+        count: documents.length,
+        error: (error as Error).message,
+      });
+
+      const insertStmt = this.db.prepare(`
+        INSERT OR REPLACE INTO vector_documents 
+        (id, project_id, content, metadata, embedding, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      let inserted = 0;
+      let failed = 0;
+
+      for (const doc of documents) {
+        try {
+          const embedding = await this.embeddingService.embed(doc.content);
+          const projectId = doc.metadata?.projectId as string || 'default';
+
+          insertStmt.run(
+            doc.id,
+            projectId,
+            doc.content,
+            JSON.stringify(doc.metadata || {}),
+            Buffer.from(new Float32Array(embedding).buffer),
+            Date.now(),
+            Date.now()
+          );
+
+          inserted++;
+        } catch (singleError) {
+          failed++;
+          logger.warn('Skipping document due to embedding error', {
+            id: doc.id,
+            error: (singleError as Error).message,
+          });
+        }
+      }
+
+      logger.info('Per-document fallback finished', {
+        inserted,
+        failed,
+        total: documents.length,
+      });
+
+      if (inserted === 0) {
+        throw new Error('Failed to embed all documents in batch and fallback modes');
+      }
     }
   }
 
@@ -380,13 +429,81 @@ class SQLiteVectorCollection implements IVectorCollection {
   }
 
   async query(params: any): Promise<SearchResult[]> {
-    // Simplified implementation - delegate to main search
-    throw new Error('Use SQLiteVectorStore.search() instead');
+    const nResults = params?.nResults || 10;
+    const whereId = params?.where?.id as string | undefined;
+
+    // Fast path used by IndexManager for metadata lookup
+    if (whereId) {
+      const stmt = this.db.prepare(`
+        SELECT id, content, metadata
+        FROM vector_documents
+        WHERE project_id = ? AND id = ?
+        LIMIT ?
+      `);
+
+      const rows = stmt.all(this.name, whereId, nResults) as Array<{
+        id: string;
+        content: string;
+        metadata: string;
+      }>;
+
+      return rows.map((row) => ({
+        id: row.id,
+        content: row.content,
+        score: 1,
+        source: SearchSource.VECTOR,
+        metadata: JSON.parse(row.metadata || '{}'),
+      }));
+    }
+
+    // Fallback: simple project-scoped fetch
+    const stmt = this.db.prepare(`
+      SELECT id, content, metadata
+      FROM vector_documents
+      WHERE project_id = ?
+      ORDER BY updated_at DESC
+      LIMIT ?
+    `);
+
+    const rows = stmt.all(this.name, nResults) as Array<{
+      id: string;
+      content: string;
+      metadata: string;
+    }>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      content: row.content,
+      score: 1,
+      source: SearchSource.VECTOR,
+      metadata: JSON.parse(row.metadata || '{}'),
+    }));
   }
 
   async add(documents: VectorDocument[]): Promise<void> {
-    // Simplified implementation - delegate to main addDocuments
-    throw new Error('Use SQLiteVectorStore.addDocuments() instead');
+    if (!documents.length) return;
+
+    const insertStmt = this.db.prepare(`
+      INSERT OR REPLACE INTO vector_documents
+      (id, project_id, content, metadata, embedding, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const now = Date.now();
+
+    for (const doc of documents) {
+      const embedding = doc.embedding || (await this.embeddingService.embed(doc.content));
+
+      insertStmt.run(
+        doc.id,
+        this.name,
+        doc.content,
+        JSON.stringify(doc.metadata || {}),
+        Buffer.from(new Float32Array(embedding).buffer),
+        now,
+        now,
+      );
+    }
   }
 
   async delete(ids: string[]): Promise<void> {

@@ -1,8 +1,7 @@
 /**
  * Store Memory Tool
  *
- * Armazena memórias no sistema hierárquico local (SQLite)
- * com suporte opcional a sync com Mem0
+ * Armazena memórias no sistema hierárquico local (SQLite).
  */
 
 import { IToolHandler } from "@th0th/shared";
@@ -14,6 +13,7 @@ import path from "path";
 import fs from "fs";
 import { EmbeddingService } from "../data/chromadb/vector-store.js";
 import { encode as toTOON } from "@toon-format/toon";
+import { memoryConsolidationJob } from "../services/jobs/memory-consolidation-job.js";
 
 interface StoreMemoryParams {
   content: string;
@@ -245,6 +245,9 @@ export class StoreMemoryTool implements IToolHandler {
         hasProjectId: !!projectId,
         agentId: agentId || "unknown",
       });
+
+      // Trigger background consolidation opportunistically (non-blocking)
+      memoryConsolidationJob.maybeRun("store");
 
       const responseData = {
         success: true,

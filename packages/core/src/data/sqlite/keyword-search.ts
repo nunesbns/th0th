@@ -33,6 +33,11 @@ export class KeywordSearch implements IKeywordSearch {
     try {
       this.db = new Database(this.dbPath);
 
+      // Improve lock tolerance for concurrent read/write workloads
+      this.db.exec("PRAGMA journal_mode = WAL");
+      this.db.exec("PRAGMA synchronous = NORMAL");
+      this.db.exec("PRAGMA busy_timeout = 5000");
+
       // Create FTS5 virtual table
       this.db.exec(`
         CREATE VIRTUAL TABLE IF NOT EXISTS ${this.tableName} USING fts5(
@@ -59,7 +64,9 @@ export class KeywordSearch implements IKeywordSearch {
 
       logger.info('SQLite FTS5 keyword search initialized', {
         dbPath: this.dbPath,
-        table: this.tableName
+        table: this.tableName,
+        busyTimeoutMs: 5000,
+        journalMode: 'WAL'
       });
 
     } catch (error) {

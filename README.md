@@ -98,6 +98,25 @@ node test_final_integration.mjs
 # Expected: 7/7 tests passing
 ```
 
+## 📈 BEIR Benchmark
+
+Run retrieval benchmark with a BEIR dataset folder extracted locally
+(must contain `corpus.jsonl`, `queries.jsonl`, `qrels/test.tsv`):
+
+```bash
+bun run bench:beir -- \
+  --datasetDir /path/to/beir/scifact \
+  --datasetName scifact \
+  --projectId beir-scifact \
+  --k 10 \
+  --maxQueries 300
+```
+
+Useful options:
+- `--forceReindex false` to reuse existing index
+- `--minScore 0.0` to avoid filtering relevant docs
+- `--keepTemp true` to inspect generated temporary corpus files
+
 ---
 
 ## 📚 Documentation

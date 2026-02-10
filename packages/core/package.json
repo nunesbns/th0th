@@ -21,7 +21,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "bench:fixture:sicad": "bun run src/scripts/create-sicad-beir-fixture.ts",
+    "bench:beir": "bun run src/scripts/beir-benchmark.ts"
   },
   "dependencies": {
     "@ai-sdk/cohere": "^3.0.17",

@@ -18,6 +18,7 @@ interface GetOptimizedContextParams {
   projectPath?: string;
   maxTokens?: number;
   maxResults?: number;
+  workingMemoryBudget?: number;
 }
 
 export class GetOptimizedContextTool implements IToolHandler {
@@ -49,6 +50,11 @@ export class GetOptimizedContextTool implements IToolHandler {
         description: "Maximum search results to include",
         default: 5,
       },
+      workingMemoryBudget: {
+        type: "number",
+        description:
+          "Token budget for active working set before compression (defaults to 80% of maxTokens)",
+      },
     },
     required: ["query", "projectId"],
   };
@@ -68,6 +74,7 @@ export class GetOptimizedContextTool implements IToolHandler {
       projectPath,
       maxTokens = 4000,
       maxResults = 5,
+      workingMemoryBudget,
     } = params as GetOptimizedContextParams;
 
     try {
@@ -75,6 +82,7 @@ export class GetOptimizedContextTool implements IToolHandler {
         query: query.slice(0, 50),
         projectId,
         maxTokens,
+        workingMemoryBudget: workingMemoryBudget || Math.floor(maxTokens * 0.8),
       });
 
       // Step 1: Search for relevant code
@@ -84,7 +92,7 @@ export class GetOptimizedContextTool implements IToolHandler {
         projectPath,
         maxResults,
         responseMode: "full", // Need full content for compression
-        autoReindex: true,
+        autoReindex: false,
         minScore: 0.4,
       });
 
@@ -97,8 +105,10 @@ export class GetOptimizedContextTool implements IToolHandler {
 
       // Step 2: Format search results into context
       const results = (searchResponse.data as any)?.results || [];
+      const wmBudget = workingMemoryBudget || Math.floor(maxTokens * 0.8);
+      const workingSet = this.selectWorkingSet(results, wmBudget);
 
-      if (results.length === 0) {
+      if (workingSet.length === 0) {
         return {
           success: true,
           data: {
@@ -115,10 +125,10 @@ export class GetOptimizedContextTool implements IToolHandler {
 
       const contextParts: string[] = [
         `# Context for: ${query}\n`,
-        `Found ${results.length} relevant code sections:\n`,
+        `Found ${workingSet.length} relevant code sections (WM budget: ${wmBudget} tokens):\n`,
       ];
 
-      results.forEach((result: any, idx: number) => {
+      workingSet.forEach((result: any, idx: number) => {
         contextParts.push(
           `## ${idx + 1}. ${result.filePath || "Unknown"} (score: ${(result.score * 100).toFixed(1)}%)`,
         );
@@ -157,20 +167,21 @@ export class GetOptimizedContextTool implements IToolHandler {
 
       const finalTokens = estimateTokens(finalContext, "code");
 
-      logger.info("Optimized context retrieved", {
-        rawTokens,
-        finalTokens,
-        tokensSaved: rawTokens - finalTokens,
-        compressionRatio: compressionRatio || 0,
-        sources: results.length,
-      });
+        logger.info("Optimized context retrieved", {
+          rawTokens,
+          finalTokens,
+          tokensSaved: rawTokens - finalTokens,
+          compressionRatio: compressionRatio || 0,
+          sources: workingSet.length,
+          wmBudget,
+        });
 
       return {
         success: true,
         data: {
           context: finalContext,
-          sources: results.map((r: any) => r.filePath || "unknown"),
-          resultsCount: results.length,
+          sources: workingSet.map((r: any) => r.filePath || "unknown"),
+          resultsCount: workingSet.length,
         },
         metadata: {
           tokensSaved: rawTokens - finalTokens,
@@ -189,5 +200,57 @@ export class GetOptimizedContextTool implements IToolHandler {
         error: `Failed to retrieve context: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Select an active working set under token budget.
+   * Prioritizes top scores while keeping source diversity.
+   */
+  private selectWorkingSet(results: any[], tokenBudget: number): any[] {
+    if (!results.length || tokenBudget <= 0) {
+      return [];
+    }
+
+    const selected: any[] = [];
+    const selectedFiles = new Set<string>();
+    let usedTokens = 0;
+
+    const sorted = [...results].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // Pass 1: pick best from distinct files
+    for (const result of sorted) {
+      const filePath = result.filePath || "unknown";
+      if (selectedFiles.has(filePath)) {
+        continue;
+      }
+
+      const content = result.content || result.preview || "";
+      const tokens = estimateTokens(content, "code");
+      if (usedTokens + tokens > tokenBudget) {
+        continue;
+      }
+
+      selected.push(result);
+      selectedFiles.add(filePath);
+      usedTokens += tokens;
+    }
+
+    // Pass 2: fill remaining budget with best leftovers
+    for (const result of sorted) {
+      if (selected.includes(result)) {
+        continue;
+      }
+
+      const content = result.content || result.preview || "";
+      const tokens = estimateTokens(content, "code");
+      if (usedTokens + tokens > tokenBudget) {
+        continue;
+      }
+
+      selected.push(result);
+      usedTokens += tokens;
+    }
+
+    return selected;
   }
 }

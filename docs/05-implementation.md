@@ -10,7 +10,7 @@
 
 ### 1.2 Contas e API Keys (Opcionais)
 
-- **Mem0.ai**: Crie conta em [app.mem0.ai](https://app.mem0.ai) - **OPCIONAL**
+- **camada de memoria local**: Crie conta em [app.memory.ai](https://app.memory.ai) - **OPCIONAL**
 - **OpenAI** (opcional): Para modelos GPT
 - **Anthropic** (opcional): Para modelos Claude
 
@@ -22,8 +22,8 @@
 
 ```bash
 # Criar diretório
-mkdir mcp-rlm-mem0
-cd mcp-rlm-mem0
+mkdir th0th-mcp
+cd th0th-mcp
 
 # Inicializar projeto
 npm init -y
@@ -32,8 +32,8 @@ npm init -y
 npm install @modelcontextprotocol/sdk chromadb sqlite3
 npm install -D typescript @types/node ts-node
 
-# Instalar Mem0 apenas se quiser sincronização cloud (OPCIONAL)
-npm install mem0ai
+# Instalar memoria local apenas se quiser sincronização cloud (OPCIONAL)
+npm install memoryai
 
 # Inicializar TypeScript
 npx tsc --init
@@ -70,8 +70,8 @@ npx tsc --init
 
 ```bash
 # .env
-# Mem0 NÃO configurado = modo standalone automático
-# MEM0_API_KEY=
+# memoria local NÃO configurado = modo standalone automático
+# CLOUD_SYNC_API_KEY=
 
 # Configurações locais
 PROJECT_PATH=/caminho/do/projeto
@@ -81,12 +81,12 @@ LOG_LEVEL=info
 OPERATION_MODE=standalone
 ```
 
-#### Opção B: Híbrido (com Mem0 opcional)
+#### Opção B: Híbrido (com memoria local opcional)
 
 ```bash
 # .env
-MEM0_API_KEY=sua-api-key-aqui
-MEM0_HOST=https://api.mem0.ai
+CLOUD_SYNC_API_KEY=sua-api-key-aqui
+CLOUD_SYNC_HOST=https://api.example.com
 PROJECT_PATH=/caminho/do/projeto
 LOCAL_DB_PATH=./data/memory.db
 CACHE_PATH=./cache
@@ -100,7 +100,7 @@ PREFER_LOCAL=true  # Usa local quando possível
 ### 3.1 Estrutura de Diretórios
 
 ```
-mcp-rlm-mem0/
+th0th-mcp/
 ├── src/
 │   ├── index.ts                   # Entry point
 │   ├── server.ts                  # MCP Server
@@ -109,7 +109,7 @@ mcp-rlm-mem0/
 │   ├── memory/                    # Sistema de memória
 │   │   ├── local-memory.ts       # Memória local (standalone)
 │   │   ├── unified-manager.ts    # Manager unificado
-│   │   └── mem0-client.ts        # Cliente Mem0 (opcional)
+│   │   └── memory-client.ts        # Cliente memoria local (opcional)
 │   ├── compression.ts            # Compressão semântica
 │   ├── cache.ts                  # Sistema de cache
 │   ├── router.ts                 # Context router
@@ -196,10 +196,10 @@ import { config } from 'dotenv';
 config();
 
 export const CONFIG = {
-  // Mem0
-  mem0: {
-    apiKey: process.env.MEM0_API_KEY || '',
-    host: process.env.MEM0_HOST || 'https://api.mem0.ai'
+  // memoria local
+  memory: {
+    apiKey: process.env.CLOUD_SYNC_API_KEY || '',
+    host: process.env.CLOUD_SYNC_HOST || 'https://api.example.com'
   },
   
   // OpenAI (opcional)
@@ -231,22 +231,22 @@ export const CONFIG = {
 };
 ```
 
-### 3.4 Implementar Cliente Mem0
+### 3.4 Implementar Cliente memoria local
 
 ```typescript
-// src/mem0-client.ts
+// src/memory-client.ts
 
-import { MemoryClient } from 'mem0ai';
+import { MemoryClient } from 'memoryai';
 import { CONFIG } from './config.js';
 import { Memory, Message } from './types.js';
 
-export class Mem0Integration {
+export class memoria localIntegration {
   private client: MemoryClient;
   
   constructor() {
     this.client = new MemoryClient({
-      apiKey: CONFIG.mem0.apiKey,
-      host: CONFIG.mem0.host
+      apiKey: CONFIG.memory.apiKey,
+      host: CONFIG.memory.host
     });
   }
   
@@ -528,17 +528,17 @@ export class CacheManager {
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { Mem0Integration } from './mem0-client.js';
+import { memoria localIntegration } from './memory-client.js';
 import { SemanticCompressor } from './compression.js';
 import { CacheManager } from './cache.js';
 
 export async function startServer(): Promise<void> {
   const server = new McpServer({
-    name: 'rlm-mem0-server',
+    name: 'rlm-memory-server',
     version: '1.0.0'
   });
   
-  const mem0 = new Mem0Integration();
+  const memory = new memoria localIntegration();
   const compressor = new SemanticCompressor();
   const cache = new CacheManager();
   
@@ -575,8 +575,8 @@ export async function startServer(): Promise<void> {
       
       // Recupera memórias
       const [preferences, sessionContext] = await Promise.all([
-        mem0.getUserPreferences(userId, query),
-        mem0.getSessionContext(userId, sessionId, query)
+        memory.getUserPreferences(userId, query),
+        memory.getSessionContext(userId, sessionId, query)
       ]);
       
       const result = {
@@ -608,7 +608,7 @@ export async function startServer(): Promise<void> {
   server.registerTool(
     'store_memory',
     {
-      description: 'Armazena uma memória no Mem0',
+      description: 'Armazena uma memória no memoria local',
       inputSchema: {
         type: 'object',
         properties: {
@@ -625,7 +625,7 @@ export async function startServer(): Promise<void> {
       }
     },
     async ({ content, userId, sessionId, type, metadata }) => {
-      await mem0.addMemory(
+      await memory.addMemory(
         [{ role: 'user', content }],
         userId,
         sessionId,
@@ -658,7 +658,7 @@ export async function startServer(): Promise<void> {
       }
     },
     async ({ query, userId, limit, type }) => {
-      const memories = await mem0.searchMemories(query, userId, undefined, {
+      const memories = await memory.searchMemories(query, userId, undefined, {
         limit,
         type
       });
@@ -724,7 +724,7 @@ export async function startServer(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   
-  console.error('MCP RLM-Mem0 server running on stdio');
+  console.error('MCP RLM-memoria local server running on stdio');
 }
 ```
 
@@ -777,12 +777,12 @@ npx @modelcontextprotocol/inspector node build/index.js
 // ~/.config/opencode/mcp.json (ou equivalente)
 {
   "mcpServers": {
-    "rlm-mem0": {
+    "rlm-memory": {
       "command": "node",
-      "args": ["/caminho/para/mcp-rlm-mem0/build/index.js"],
+      "args": ["/caminho/para/th0th-mcp/build/index.js"],
       "env": {
-        "MEM0_API_KEY": "sua-api-key",
-        "MEM0_HOST": "https://api.mem0.ai",
+        "CLOUD_SYNC_API_KEY": "sua-api-key",
+        "CLOUD_SYNC_HOST": "https://api.example.com",
         "PROJECT_PATH": "/caminho/do/projeto"
       }
     }
@@ -806,11 +806,11 @@ npx @modelcontextprotocol/inspector node build/index.js
 | Problema | Solução |
 |----------|---------|
 | `Module not found` | Verifique se compilou com `npx tsc` |
-| `MEM0_API_KEY not set` | **Normal!** Sistema funciona sem Mem0 (modo standalone) |
-| `Connection refused` | Verifique se Mem0 está rodando (somente se usar self-hosted) |
+| `CLOUD_SYNC_API_KEY not set` | **Normal!** Sistema funciona sem sincronização cloud (modo standalone) |
+| `Connection refused` | Verifique se memoria local está rodando (somente se usar self-hosted) |
 | `Cache não funciona` | Verifique permissões de escrita no diretório cache |
 | `SQLite error` | Verifique se diretório `./data` existe e tem permissão de escrita |
-| `Quero usar offline` | Não configure MEM0_API_KEY = modo standalone automático |
+| `Quero usar offline` | Não configure CLOUD_SYNC_API_KEY = modo standalone automático |
 
 ### 6.2 Debug Mode
 
@@ -826,7 +826,7 @@ LOG_LEVEL=debug node build/index.js
 
 ### 7.1 Modo Standalone (Padrão)
 
-Funciona 100% offline sem Mem0:
+Funciona 100% offline sem memoria local:
 
 ```typescript
 // src/index.ts
@@ -839,12 +839,12 @@ const memory = new LocalMemoryManager({
 
 // Sistema pronto para uso!
 console.log('✅ MCP RLM rodando em modo STANDALONE');
-console.log('💡 Dica: Configure MEM0_API_KEY para habilitar sincronização');
+console.log('💡 Dica: Configure CLOUD_SYNC_API_KEY para habilitar sincronização');
 ```
 
-### 7.2 Modo Híbrido (com Mem0)
+### 7.2 Modo Híbrido (com memoria local)
 
-Usa Mem0 como complemento:
+Usa memoria local como complemento:
 
 ```typescript
 // src/index.ts
@@ -852,7 +852,7 @@ import { UnifiedMemoryManager } from './memory/unified-manager.js';
 
 const memory = new UnifiedMemoryManager('hybrid');
 
-// Usa local primeiro, sincroniza com Mem0 quando possível
+// Usa local primeiro, sincroniza com memoria local quando possível
 console.log('✅ MCP RLM rodando em modo HÍBRIDO');
 ```
 
