@@ -1,6 +1,6 @@
 {
   "name": "th0th",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "th0th - Ancient knowledge keeper for modern code. Semantic search with 98% token reduction",
   "workspaces": [
