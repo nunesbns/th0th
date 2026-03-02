@@ -50,13 +50,21 @@ jobs:
       - name: Resolve workspace dependencies
         run: |
           VERSION=$(jq -r '.version' packages/shared/package.json)
-          echo "Resolving workspace:* → $VERSION"
+          echo "Resolving workspace:* → ^$VERSION"
 
           for pkg in packages/core/package.json apps/*/package.json; do
             if grep -q '"workspace:\*"' "$pkg"; then
               sed -i "s|\"workspace:\*\"|\"^$VERSION\"|g" "$pkg"
               echo "  ✓ Resolved in $pkg"
             fi
+          done
+
+      - name: Rename scope for npm publish (@th0th → @th0th-ai)
+        run: |
+          echo "Renaming @th0th/* → @th0th-ai/* in package.json files for npm"
+          for pkg in packages/shared/package.json packages/core/package.json apps/*/package.json; do
+            sed -i 's|@th0th/|@th0th-ai/|g' "$pkg"
+            echo "  ✓ Renamed in $pkg"
           done
 
       - name: Upload build artifacts
@@ -90,9 +98,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -102,18 +107,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: .
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Publish @th0th/shared
+      - name: Publish @th0th-ai/shared
         working-directory: packages/shared
         run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @th0th/core
+      - name: Publish @th0th-ai/core
         working-directory: packages/core
         run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
         env:
@@ -132,9 +133,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -144,24 +142,20 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: .
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Publish @th0th/tools-api
+      - name: Publish @th0th-ai/tools-api
         working-directory: apps/tools-api
         run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @th0th/mcp-client
+      - name: Publish @th0th-ai/mcp-client
         working-directory: apps/mcp-client
         run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @th0th/opencode-plugin
+      - name: Publish @th0th-ai/opencode-plugin
         working-directory: apps/opencode-plugin
         run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
         env:
