@@ -87,7 +87,7 @@ fi
 echo ""
 echo -e "${BOLD}[2/4] Pulling embedding models...${NC}"
 
-EMBEDDING_MODEL="${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}"
+EMBEDDING_MODEL="${OLLAMA_EMBEDDING_MODEL:-bge-m3}"
 
 # Check if model is already available via API
 MODEL_EXISTS=$(curl -s "${OLLAMA_URL}/api/tags" 2>/dev/null | python3 -c "
