@@ -100,11 +100,13 @@ export class GetOptimizedContextTool implements IToolHandler {
           sources: result.sources,
           resultsCount: result.resultsCount,
           memoriesCount: result.memoriesCount,
+          sessionCacheHits: result.sessionCacheHits,
         },
         metadata: {
           tokensSaved: result.tokensSaved,
           compressionRatio: result.compressionRatio,
-          cacheHit: false,
+          tokensSavedBySessionCache: result.tokensSavedBySessionCache,
+          cacheHit: result.sessionCacheHits > 0,
         } as any,
       };
     } catch (error) {
