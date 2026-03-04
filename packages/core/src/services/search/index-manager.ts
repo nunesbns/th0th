@@ -291,6 +291,7 @@ export class IndexManager {
         ".js",
         ".tsx",
         ".jsx",
+        ".dart",
         ".py",
       ];
 

@@ -147,6 +147,7 @@ export class ContextualSearchRLM {
       ".js",
       ".tsx",
       ".jsx",
+      ".dart",
       ".py",
     ];
 
